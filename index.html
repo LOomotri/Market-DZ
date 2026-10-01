@@ -283,6 +283,7 @@ if(!location){alert("اكتب الولاية");return;}
 if(currentImages.length===0){alert("اختر صورة");return;}
 products.push({id:Date.now(),name:name,price:Number(price),condition:condition,category:category,location:location,description:description,images:currentImages.slice(),rating:0,reviews:[],ownerPhone:currentUser.phone,ownerName:currentUser.name,orders:0});
 safeSave("marketDZ_products",products);
+publishProductFirebase(products[products.length-1]);
 renderProducts();
 closeModal("publishModal");
 ["pName","pPrice","pLocation","pDescription","pImages"].forEach(function(id){document.getElementById(id).value="";});
