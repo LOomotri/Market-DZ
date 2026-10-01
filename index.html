@@ -645,7 +645,7 @@ async function loadProducts(){
   renderProducts();
 }
 
-loadProducts();
+setTimeout(function(){ loadProducts(); }, 1500);
 
 
 if(localStorage.getItem("marketDZ_dark")==="1"){
