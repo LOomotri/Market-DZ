@@ -2,9 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-  <meta name="google-site-verification" content="FqHZnAMvvDfydxz9APqPWokmB9YiQUK8Wop6sC_bCTg" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Market DZ</title>
+<title>Market DZ - حقيقي</title>
+<!-- تضمين مكتبات فايربيس (Firebase SDK) للربط الحقيقي -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Tahoma,sans-serif;background:#f5f6f7;color:#222}
@@ -105,7 +108,7 @@ header{background:#004d35;padding:18px;color:white}
 <div class="field"><label>الولاية</label><input id="pLocation" type="text"></div>
 <div class="field"><label>الوصف</label><textarea id="pDescription"></textarea></div>
 <div class="field"><label>الصور</label><input id="pImages" type="file" accept="image/*" multiple onchange="previewImages(event)"><div id="preview" class="preview"></div></div>
-<button class="submit" onclick="publishProduct()">نشر</button>
+<button class="submit" onclick="publishProduct()">نشر حقيقي</button>
 </div></div>
 
 <div id="loginModal" class="modal"><div class="box">
@@ -115,23 +118,15 @@ header{background:#004d35;padding:18px;color:white}
 <button id="tabRegister" class="submit" style="background:#ccc;color:#333;" onclick="switchAuthTab('register')">حساب جديد</button>
 </div>
 <div id="loginForm">
-<div class="field"><label>رقم الهاتف</label><input id="phone" type="tel" placeholder="0550123456"></div>
+<div class="field"><label>البريد الإلكتروني</label><input id="email" type="email"></div>
 <div class="field"><label>كلمة المرور</label><input id="password" type="password"></div>
-<button class="submit" onclick="login()">دخول</button>
+<button class="submit" onclick="realLogin()">تسجيل دخول حقيقي</button>
 </div>
 <div id="registerForm" style="display:none;">
 <div class="field"><label>الاسم</label><input id="regName" type="text"></div>
-<div class="field"><label>رقم الهاتف</label><input id="regPhone" type="tel" placeholder="0550123456"></div>
+<div class="field"><label>البريد الإلكتروني</label><input id="regEmail" type="email"></div>
 <div class="field"><label>كلمة المرور</label><input id="regPassword" type="password"></div>
-<div class="field"><label>تأكيد كلمة المرور</label><input id="regPassword2" type="password"></div>
-<div class="field"><label>OTP</label>
-<div style="display:flex;gap:8px;">
-<input id="otpCode" type="text" maxlength="6" style="flex:1;text-align:center;letter-spacing:6px;font-weight:bold;">
-<button type="button" class="submit" style="width:auto;padding:13px 18px;background:#ff7100;" onclick="sendOtp('regPhone','otpStatus')">إرسال</button>
-</div>
-<small id="otpStatus" style="color:#777;"></small>
-</div>
-<button class="submit" onclick="register()">إنشاء</button>
+<button class="submit" onclick="realRegister()">إنشاء حساب حقيقي</button>
 </div>
 </div></div>
 
@@ -140,49 +135,10 @@ header{background:#004d35;padding:18px;color:white}
 <div style="text-align:center;margin-bottom:20px;">
 <img id="menuAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #008653;">
 <h2 id="menuName">المستخدم</h2>
-<p id="menuPhone" style="color:#777;"></p>
+<p id="menuEmail" style="color:#777;"></p>
 </div>
-<div class="menu-item" onclick="closeModal('accountModal');openProfile()"><span>👤 الملف الشخصي</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openSettings()"><span>⚙️ الإعدادات</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openPrivacy()"><span>🔒 الخصوصية</span><span>›</span></div>
 <div class="menu-item" onclick="closeModal('accountModal');openOrders()"><span>📦 منتجاتي</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openMessages()"><span>💬 الرسائل</span><span><span id="unreadBadge" class="badge" style="display:none;">0</span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openAppSettings()"><span>🛠️ إعدادات التطبيق</span><span>›</span></div>
-<button class="delete" style="background:#555;margin-top:15px;" onclick="logout()">🚪 خروج</button>
-</div></div>
-
-<div id="profileModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('profileModal')">×</button>
-<h2>👤 الملف الشخصي</h2>
-<div style="text-align:center;">
-<img id="profileAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #008653;">
-<div class="field"><label>الصورة</label><input type="file" accept="image/*" onchange="changeAvatar(event)"></div>
-</div>
-<div class="field"><label>الاسم</label><input id="profileName" type="text"></div>
-<button class="submit" onclick="saveProfile()">حفظ</button>
-</div></div>
-
-<div id="settingsModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('settingsModal')">×</button>
-<h2>⚙️ الإعدادات</h2>
-<div class="field"><label>رقم الهاتف</label><input id="setPhone" type="tel"></div>
-<button class="submit" onclick="savePhone()">حفظ الرقم</button>
-<hr style="margin:20px 0;">
-<div class="field"><label>كلمة المرور الجديدة</label><input id="setPassword" type="password"></div>
-<div class="field"><label>OTP</label>
-<div style="display:flex;gap:8px;">
-<input id="setOtpCode" type="text" maxlength="6" style="flex:1;text-align:center;letter-spacing:6px;font-weight:bold;">
-<button type="button" class="submit" style="width:auto;padding:13px 18px;background:#ff7100;" onclick="sendOtpForPassword()">إرسال</button>
-</div>
-<small id="setOtpStatus" style="color:#777;"></small>
-</div>
-<button class="submit" onclick="savePassword()">حفظ كلمة المرور</button>
-</div></div>
-
-<div id="privacyModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('privacyModal')">×</button>
-<h2>🔒 الخصوصية</h2>
-<div style="padding:14px;background:#f4f4f4;border-radius:12px;"><b>رقم الهاتف:</b> <span id="privacyPhone">—</span></div>
+<button class="delete" style="background:#555;margin-top:15px;" onclick="realLogout()">🚪 خروج</button>
 </div></div>
 
 <div id="ordersModal" class="modal"><div class="box">
@@ -191,469 +147,233 @@ header{background:#004d35;padding:18px;color:white}
 <div id="ordersList"></div>
 </div></div>
 
-<div id="messagesModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('messagesModal')">×</button>
-<h2>💬 الرسائل</h2>
-<div id="chatsList"></div>
-<div id="chatWindow" style="display:none;">
-<button class="submit" style="background:#ccc;color:#333;margin-bottom:10px;" onclick="backToChats()">‹ رجوع</button>
-<h3 id="chatWithName"></h3>
-<div class="chat-window" id="chatMessages"></div>
-<div class="chat-input">
-<input id="chatInput" placeholder="رسالة..." onkeypress="if(event.key==='Enter')sendMessage()">
-<button onclick="sendMessage()">إرسال</button>
-</div>
-</div>
-</div></div>
-
-<div id="appSettingsModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('appSettingsModal')">×</button>
-<h2>🛠️ إعدادات التطبيق</h2>
-<div style="display:flex;justify-content:space-between;padding:12px;background:#f4f4f4;border-radius:10px;margin-bottom:10px;">
-<span>🌙 الوضع المظلم</span>
-<input id="darkToggle" type="checkbox" style="width:22px;height:22px;" onchange="toggleDarkMode()">
-</div>
-<button class="delete" onclick="deleteAccount()" style="margin-top:20px;">🗑️ حذف الحساب</button>
-</div></div>
-
 <div id="productModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('productModal')">×</button>
 <div id="productDetails"></div>
 </div></div>
 
 <script>
-var products=[],users=[],currentCondition="جديد",currentCategory="الكل",currentImages=[],generatedOtp=null,currentUser=null,currentChatWith=null,passwordOtp=null;
+// إعدادات الاتصال الحقيقي بقاعدة بيانات Firebase (استبدل القيم بمعلومات مشروعك الفعلي)
+var firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
 
-function safeLoad(k,f){try{var v=localStorage.getItem(k);if(!v)return f;return JSON.parse(v);}catch(e){return f;}}
-function safeSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-function isAlgerianPhone(p){if(!p)return false;var c=p.replace(/\s+/g,"").replace(/-/g,"");return /^(\+213|213|0)(5|6|7)[0-9]{8}$/.test(c);}
-function normalizeDzPhone(p){var c=p.replace(/\s+/g,"").replace(/-/g,"");if(c.indexOf("+213")===0)return c;if(c.indexOf("213")===0)return "+"+c;if(c.indexOf("0")===0)return "+213"+c.slice(1);return c;}
-function closeModal(id){var m=document.getElementById(id);if(m)m.style.display="none";}
-function showModal(id){var m=document.getElementById(id);if(m)m.style.display="flex";}
+var products=[], currentCondition="جديد", currentCategory="الكل", currentImages=[], currentUser=null;
+
+function closeModal(id){document.getElementById(id).style.display="none";}
+function showModal(id){document.getElementById(id).style.display="flex";}
+
+// مراقبة حالة المستخدم الحقيقية عبر Firebase Authentication
+auth.onAuthStateChanged(function(user) {
+    if (user) {
+        currentUser = { email: user.email, name: user.displayName || user.email.split('@')[0], uid: user.uid };
+    } else {
+        currentUser = null;
+    }
+    fetchProductsFromCloud();
+});
 
 function filterCondition(cond){
-currentCondition=cond;
-["condAll","condNew","condUsed"].forEach(function(i){document.getElementById(i).classList.remove("active");});
-if(cond==="الكل")document.getElementById("condAll").classList.add("active");
-else if(cond==="جديد")document.getElementById("condNew").classList.add("active");
-else document.getElementById("condUsed").classList.add("active");
-currentCategory="الكل";
-var cats=document.querySelectorAll("#categoriesBar button");
-cats.forEach(function(b){b.classList.remove("active");});
-if(cats[0])cats[0].classList.add("active");
-searchProducts();
+    currentCondition=cond;
+    ["condAll","condNew","condUsed"].forEach(function(i){document.getElementById(i).classList.remove("active");});
+    if(cond==="الكل")document.getElementById("condAll").classList.add("active");
+    else if(cond==="جديد")document.getElementById("condNew").classList.add("active");
+    else document.getElementById("condUsed").classList.add("active");
+    searchProducts();
 }
 
 function filterCategory(cat,btn){
-currentCategory=cat;
-var cats=document.querySelectorAll("#categoriesBar button");
-cats.forEach(function(b){b.classList.remove("active");});
-if(btn)btn.classList.add("active");
-searchProducts();
+    currentCategory=cat;
+    var cats=document.querySelectorAll("#categoriesBar button");
+    cats.forEach(function(b){b.classList.remove("active");});
+    if(btn)btn.classList.add("active");
+    searchProducts();
 }
 
 function openPublish(){
-if(!currentUser){alert("سجّل الدخول أولًا");openAccountMenu();return;}
-document.getElementById("pCondition").value=(currentCondition==="الكل")?"جديد":currentCondition;
-showModal("publishModal");
+    if(!currentUser){alert("يرجى تسجيل الدخول أولاً");showModal("loginModal");return;}
+    document.getElementById("pCondition").value=(currentCondition==="الكل")?"جديد":currentCondition;
+    showModal("publishModal");
 }
 
 function previewImages(event){
-currentImages=[];
-var preview=document.getElementById("preview");preview.innerHTML="";
-var files=event.target.files;
-Array.from(files).forEach(function(file){
-if(!file.type.startsWith("image/"))return;
-var reader=new FileReader();
-reader.onload=function(e){currentImages.push(e.target.result);var img=document.createElement("img");img.src=e.target.result;preview.appendChild(img);};
-reader.readAsDataURL(file);
-});
+    currentImages=[];
+    var preview=document.getElementById("preview");preview.innerHTML="";
+    Array.from(event.target.files).forEach(function(file){
+        var reader=new FileReader();
+        reader.onload=function(e){
+            currentImages.push(e.target.result);
+            var img=document.createElement("img");img.src=e.target.result;
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
 }
 
+// حفظ المنتج حقيقياً في قاعدة البيانات السحابية (Firestore)
 function publishProduct(){
-var name=document.getElementById("pName").value.trim();
-var price=document.getElementById("pPrice").value;
-var condition=document.getElementById("pCondition").value;
-var category=document.getElementById("pCategory").value;
-var location=document.getElementById("pLocation").value.trim();
-var description=document.getElementById("pDescription").value.trim();
-if(!name){alert("اكتب اسم المنتج");return;}
-if(!price){alert("اكتب السعر");return;}
-if(!location){alert("اكتب الولاية");return;}
-if(currentImages.length===0){alert("اختر صورة");return;}
-products.push({id:Date.now(),name:name,price:Number(price),condition:condition,category:category,location:location,description:description,images:currentImages.slice(),rating:0,reviews:[],ownerPhone:currentUser.phone,ownerName:currentUser.name,orders:0});
-safeSave("marketDZ_products",products);
-publishProductFirebase(products[products.length-1]);
-renderProducts();
-closeModal("publishModal");
-["pName","pPrice","pLocation","pDescription","pImages"].forEach(function(id){document.getElementById(id).value="";});
-document.getElementById("preview").innerHTML="";
-currentImages=[];
-alert("✅ تم نشر المنتج");
+    var name=document.getElementById("pName").value.trim();
+    var price=document.getElementById("pPrice").value;
+    var condition=document.getElementById("pCondition").value;
+    var category=document.getElementById("pCategory").value;
+    var location=document.getElementById("pLocation").value.trim();
+    var description=document.getElementById("pDescription").value.trim();
+
+    if(!name || !price || !location || currentImages.length===0){alert("الرجاء ملء جميع الحقول وإضافة صورة");return;}
+
+    var newProduct = {
+        name: name,
+        price: Number(price),
+        condition: condition,
+        category: category,
+        location: location,
+        description: description,
+        images: currentImages,
+        ownerEmail: currentUser.email,
+        ownerName: currentUser.name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    db.collection("products").add(newProduct).then(function(){
+        alert("✅ تم نشر المنتج بنجاح في السحابة!");
+        closeModal("publishModal");
+        ["pName","pPrice","pLocation","pDescription","pImages"].forEach(function(id){document.getElementById(id).value="";});
+        document.getElementById("preview").innerHTML="";
+        currentImages=[];
+        fetchProductsFromCloud();
+    }).catch(function(error){
+        alert("❌ خطأ أثناء النشر: " + error.message);
+    });
+}
+
+// جلب المنتجات الحقيقية مباشرة من السحابة
+function fetchProductsFromCloud(){
+    db.collection("products").orderBy("createdAt", "desc").get().then(function(querySnapshot){
+        products = [];
+        querySnapshot.forEach(function(doc){
+            var p = doc.data();
+            p.id = doc.id;
+            products.push(p);
+        });
+        searchProducts();
+    });
 }
 
 function renderProducts(list){
-if(!list)list=products;
-var c=document.getElementById("products");c.innerHTML="";
-if(list.length===0){c.innerHTML='<div class="empty">لا توجد منتجات</div>';return;}
-list.forEach(function(p){
-var img=(p.images&&p.images[0])?p.images[0]:"";
-var cond=p.condition||"جديد";
-var cls=(cond==="جديد")?"new":"used";
-c.innerHTML+='<div class="card"><span class="badge-cond '+cls+'">'+cond+'</span><img src="'+img+'"><div class="info"><div class="title">'+p.name+'</div><div class="price">'+Number(p.price).toLocaleString()+' دج</div><div class="location">📍 '+p.location+' · '+p.category+'</div><br><button class="view" onclick="openProduct('+p.id+')">عرض</button></div></div>';
-});
+    var c=document.getElementById("products");c.innerHTML="";
+    if(list.length===0){c.innerHTML='<div class="empty">لا توجد منتجات حالياً</div>';return;}
+    list.forEach(function(p){
+        var img=(p.images&&p.images[0])?p.images[0]:"";
+        var cond=p.condition||"جديد";
+        var cls=(cond==="جديد")?"new":"used";
+        c.innerHTML+='<div class="card"><span class="badge-cond '+cls+'">'+cond+'</span><img src="'+img+'"><div class="info"><div class="title">'+p.name+'</div><div class="price">'+Number(p.price).toLocaleString()+' دج</div><div class="location">📍 '+p.location+' · '+p.category+'</div><br><button class="view" onclick="openProduct(\''+p.id+'\')">عرض</button></div></div>';
+    });
 }
 
 function openProduct(id){
-var p=null;
-products.forEach(function(x){if(x.id===id)p=x;});
-if(!p)return;
-var imgs="";
-p.images.forEach(function(i){imgs+='<img class="product-image" src="'+i+'">';});
-var revs="<p>لا توجد تعليقات.</p>";
-if(p.reviews&&p.reviews.length>0){revs="";p.reviews.forEach(function(r){revs+='<div class="review"><strong>'+r.name+'</strong><p>'+r.text+'</p></div>';});}
-var isOwner=currentUser&&currentUser.phone===p.ownerPhone;
-var canContact=currentUser&&!isOwner;
-var cond=p.condition||"جديد";
-var h='<h2>'+p.name+'</h2>'+imgs+'<p style="padding:5px 12px;border-radius:20px;background:'+(cond==="جديد"?"#008653":"#ff7100")+';color:white;display:inline-block;font-weight:bold;">'+cond+'</p><h2 style="margin-top:10px;">'+Number(p.price).toLocaleString()+' دج</h2><p>📂 '+p.category+'</p><p>📍 '+p.location+'</p><p>👤 '+p.ownerName+'</p><br><p>'+p.description+'</p><hr><br><h3>التعليقات</h3>'+revs+'<div class="field"><input id="reviewName" placeholder="اسمك" value="'+(currentUser?currentUser.name:'')+'"></div><div class="field"><textarea id="reviewText" placeholder="تعليقك"></textarea></div><button class="submit" onclick="addReview('+p.id+')">نشر التعليق</button>';
-if(canContact){h+='<button class="submit" style="background:#ff7100;margin-top:10px;" onclick="contactSeller(\''+p.ownerPhone+'\',\''+(p.ownerName||"").replace(/'/g,"")+'\')">💬 تواصل مع البائع</button>';}
-if(isOwner){h+='<button class="delete" onclick="deleteProduct('+p.id+')">🗑️ حذف</button>';}
-document.getElementById("productDetails").innerHTML=h;
-showModal("productModal");
-}
-
-function addReview(id){
-if(!currentUser){alert("سجّل الدخول");return;}
-var p=null;products.forEach(function(x){if(x.id===id)p=x;});
-if(!p)return;
-var n=document.getElementById("reviewName").value.trim();
-var t=document.getElementById("reviewText").value.trim();
-if(!n||!t){alert("املأ الحقول");return;}
-if(!p.reviews)p.reviews=[];
-p.reviews.push({name:n,text:t});
-safeSave("marketDZ_products",products);
-openProduct(id);
+    var p = products.find(x => x.id === id);
+    if(!p)return;
+    var imgs="";
+    p.images.forEach(function(i){imgs+='<img class="product-image" src="'+i+'">';});
+    var isOwner = currentUser && currentUser.email === p.ownerEmail;
+    var h='<h2>'+p.name+'</h2>'+imgs+'<h2>'+Number(p.price).toLocaleString()+' دج</h2><p>📍 '+p.location+'</p><p>👤 '+p.ownerName+'</p><br><p>'+p.description+'</p>';
+    if(isOwner){h+='<button class="delete" onclick="deleteProduct(\''+p.id+'\')">🗑️ حذف المنتج</button>';}
+    document.getElementById("productDetails").innerHTML=h;
+    showModal("productModal");
 }
 
 function deleteProduct(id){
-if(!confirm("حذف؟"))return;
-products=products.filter(function(p){return p.id!==id;});
-safeSave("marketDZ_products",products);
-closeModal("productModal");
-renderProducts();
+    if(!confirm("هل تريد حذف هذا المنتج نهائياً؟"))return;
+    db.collection("products").doc(id).delete().then(function(){
+        alert("تم الحذف بنجاح");
+        closeModal("productModal");
+        fetchProductsFromCloud();
+    });
 }
 
 function searchProducts(){
-var v=document.getElementById("search").value.toLowerCase().trim();
-var r=[];
-products.forEach(function(p){
-if(v&&p.name.toLowerCase().indexOf(v)===-1)return;
-if(currentCondition!=="الكل"){var c=p.condition||"جديد";if(c!==currentCondition)return;}
-if(currentCategory!=="الكل"&&p.category!==currentCategory)return;
-r.push(p);
-});
-renderProducts(r);
-}
-
-function getUnreadCount(){
-if(!currentUser)return 0;
-var m=safeLoad("marketDZ_messages",[]);
-var c=0;
-m.forEach(function(x){if(x.to===currentUser.phone&&!x.read)c++;});
-return c;
+    var v=document.getElementById("search").value.toLowerCase().trim();
+    var r=products.filter(function(p){
+        if(v && p.name.toLowerCase().indexOf(v)===-1)return;
+        if(currentCondition!=="الكل" && p.condition!==currentCondition)return;
+        if(currentCategory!=="الكل" && p.category!==currentCategory)return;
+        return true;
+    });
+    renderProducts(r);
 }
 
 function openAccountMenu(){
-if(!currentUser){showModal("loginModal");switchAuthTab("login");return;}
-document.getElementById("menuName").textContent=currentUser.name||"المستخدم";
-document.getElementById("menuPhone").textContent=currentUser.phone||"";
-if(currentUser.avatar)document.getElementById("menuAvatar").src=currentUser.avatar;
-var u=getUnreadCount();
-var b=document.getElementById("unreadBadge");
-if(u>0){b.style.display="inline-block";b.textContent=u;}else{b.style.display="none";}
-showModal("accountModal");
+    if(!currentUser){showModal("loginModal");switchAuthTab("login");return;}
+    document.getElementById("menuName").textContent=currentUser.name;
+    document.getElementById("menuEmail").textContent=currentUser.email;
+    showModal("accountModal");
 }
 
 function switchAuthTab(tab){
-var tl=document.getElementById("tabLogin"),tr=document.getElementById("tabRegister");
-if(tab==="login"){
-document.getElementById("loginForm").style.display="block";
-document.getElementById("registerForm").style.display="none";
-tl.style.background="#008653";tl.style.color="white";tr.style.background="#ccc";tr.style.color="#333";
-}else{
-document.getElementById("loginForm").style.display="none";
-document.getElementById("registerForm").style.display="block";
-tr.style.background="#008653";tr.style.color="white";tl.style.background="#ccc";tl.style.color="#333";
-}
-}
-
-function login(){
-var p=document.getElementById("phone").value.trim();
-var pw=document.getElementById("password").value;
-if(!p||!pw){alert("أدخل البيانات");return;}
-if(!isAlgerianPhone(p)){alert("❌ مسموح فقط بالأرقام الجزائرية (+213)");return;}
-var np=normalizeDzPhone(p);
-users=safeLoad("marketDZ_users",[]);
-var f=null;
-users.forEach(function(u){if(normalizeDzPhone(u.phone)===np)f=u;});
-if(!f){alert("❌ لا يوجد حساب");return;}
-if(f.password!==pw){alert("❌ كلمة المرور خاطئة");return;}
-currentUser=f;
-safeSave("marketDZ_currentUser",currentUser);
-alert("✅ تم الدخول");
-closeModal("loginModal");
+    var tl=document.getElementById("tabLogin"), tr=document.getElementById("tabRegister");
+    if(tab==="login"){
+        document.getElementById("loginForm").style.display="block";
+        document.getElementById("registerForm").style.display="none";
+        tl.style.background="#008653"; tl.style.color="white"; tr.style.background="#ccc"; tr.style.color="#333";
+    }else{
+        document.getElementById("loginForm").style.display="none";
+        document.getElementById("registerForm").style.display="block";
+        tr.style.background="#008653"; tr.style.color="white"; tl.style.background="#ccc"; tl.style.color="#333";
+    }
 }
 
-function sendOtp(inputId,statusId){
-var p=document.getElementById(inputId).value.trim();
-if(!p){alert("أدخل الرقم");return;}
-if(!isAlgerianPhone(p)){alert("❌ مسموح فقط بالأرقام الجزائرية");return;}
-generatedOtp=Math.floor(100000+Math.random()*900000).toString();
-document.getElementById(statusId).textContent="الرمز: "+generatedOtp;
-alert("OTP: "+generatedOtp);
+// تسجيل دخول حقيقي عبر Firebase
+function realLogin(){
+    var e=document.getElementById("email").value.trim();
+    var pw=document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(e, pw).then(function(){
+        alert("✅ تم تسجيل الدخول بنجاح");
+        closeModal("loginModal");
+    }).catch(function(error){
+        alert("❌ خطأ: " + error.message);
+    });
 }
 
-function register(){
-var n=document.getElementById("regName").value.trim();
-var p=document.getElementById("regPhone").value.trim();
-var pw=document.getElementById("regPassword").value;
-var pw2=document.getElementById("regPassword2").value;
-var otp=document.getElementById("otpCode").value.trim();
-if(!n||!p||!pw||!pw2){alert("املأ الحقول");return;}
-if(!isAlgerianPhone(p)){alert("❌ مسموح فقط بالأرقام الجزائرية");return;}
-if(pw!==pw2){alert("كلمتا المرور مختلفتان");return;}
-if(!generatedOtp){alert("أرسل الرمز");return;}
-if(otp!==generatedOtp){alert("رمز خاطئ");return;}
-var np=normalizeDzPhone(p);
-users=safeLoad("marketDZ_users",[]);
-var ex=false;
-users.forEach(function(u){if(normalizeDzPhone(u.phone)===np)ex=true;});
-if(ex){alert("❌ الرقم مسجّل");return;}
-var nu={name:n,phone:np,password:pw,avatar:"",createdAt:Date.now()};
-users.push(nu);safeSave("marketDZ_users",users);
-currentUser=nu;safeSave("marketDZ_currentUser",currentUser);
-generatedOtp=null;
-alert("🎉 تم إنشاء الحساب");
-closeModal("loginModal");
+// إنشاء حساب حقيقي عبر Firebase
+function realRegister(){
+    var n=document.getElementById("regName").value.trim();
+    var e=document.getElementById("regEmail").value.trim();
+    var pw=document.getElementById("regPassword").value;
+    auth.createUserWithEmailAndPassword(e, pw).then(function(result){
+        return result.user.updateProfile({displayName: n});
+    }).then(function(){
+        alert("🎉 تم إنشاء الحساب الحقيقي بنجاح");
+        closeModal("loginModal");
+    }).catch(function(error){
+        alert("❌ خطأ: " + error.message);
+    });
 }
 
-function openProfile(){
-document.getElementById("profileName").value=currentUser.name||"";
-if(currentUser.avatar)document.getElementById("profileAvatar").src=currentUser.avatar;
-showModal("profileModal");
-}
-
-function changeAvatar(event){
-var f=event.target.files[0];if(!f)return;
-var r=new FileReader();
-r.onload=function(e){
-document.getElementById("profileAvatar").src=e.target.result;
-currentUser.avatar=e.target.result;
-safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.phone===currentUser.phone)u.avatar=currentUser.avatar;});
-safeSave("marketDZ_users",us);
-};
-r.readAsDataURL(f);
-}
-
-function saveProfile(){
-var n=document.getElementById("profileName").value.trim();
-if(!n){alert("اكتب الاسم");return;}
-currentUser.name=n;
-safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.phone===currentUser.phone)u.name=n;});
-safeSave("marketDZ_users",us);
-alert("✅ تم الحفظ");
-closeModal("profileModal");
-}
-
-function openSettings(){
-document.getElementById("setPhone").value=currentUser.phone||"";
-showModal("settingsModal");
-}
-
-function savePhone(){
-var p=document.getElementById("setPhone").value.trim();
-if(!p){alert("أدخل الرقم");return;}
-if(!isAlgerianPhone(p)){alert("❌ مسموح فقط بالأرقام الجزائرية");return;}
-var np=normalizeDzPhone(p);
-var op=currentUser.phone;
-currentUser.phone=np;
-safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.phone===op)u.phone=np;});
-safeSave("marketDZ_users",us);
-products.forEach(function(pr){if(pr.ownerPhone===op)pr.ownerPhone=np;});
-safeSave("marketDZ_products",products);
-alert("✅ تم تحديث الرقم");
-}
-
-function sendOtpForPassword(){
-passwordOtp=Math.floor(100000+Math.random()*900000).toString();
-document.getElementById("setOtpStatus").textContent="الرمز: "+passwordOtp;
-alert("OTP: "+passwordOtp);
-}
-
-function savePassword(){
-var pw=document.getElementById("setPassword").value.trim();
-var otp=document.getElementById("setOtpCode").value.trim();
-if(!pw){alert("اكتب كلمة المرور");return;}
-if(!passwordOtp){alert("أرسل الرمز");return;}
-if(otp!==passwordOtp){alert("رمز خاطئ");return;}
-currentUser.password=pw;
-safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.phone===currentUser.phone)u.password=pw;});
-safeSave("marketDZ_users",us);
-passwordOtp=null;
-alert("✅ تم التحديث");
-closeModal("settingsModal");
-}
-
-function openPrivacy(){
-document.getElementById("privacyPhone").textContent=currentUser.phone||"—";
-showModal("privacyModal");
+function realLogout(){
+    auth.signOut().then(function(){
+        alert("تم تسجيل الخروج");
+        closeModal("accountModal");
+    });
 }
 
 function openOrders(){
-var c=document.getElementById("ordersList");
-var mp=products.filter(function(p){return p.ownerPhone===currentUser.phone;});
-if(mp.length===0){c.innerHTML="<p style='color:#777;'>لا توجد منتجات</p>";return;}
-c.innerHTML="";
-mp.forEach(function(p){
-c.innerHTML+='<div style="display:flex;gap:10px;padding:12px;background:#f4f4f4;border-radius:12px;margin-bottom:10px;"><img src="'+p.images[0]+'" style="width:60px;height:60px;border-radius:10px;object-fit:cover;"><div style="flex:1;"><b>'+p.name+'</b><div style="color:#008653;font-weight:bold;">'+Number(p.price).toLocaleString()+' دج</div><div style="color:#777;font-size:13px;">📦 '+p.category+' · '+p.condition+'</div></div></div>';
-});
-showModal("ordersModal");
-}
-
-function openMessages(){
-var c=document.getElementById("chatsList");
-var all=safeLoad("marketDZ_messages",[]);
-var map={};
-all.forEach(function(m){
-if(m.from===currentUser.phone||m.to===currentUser.phone){
-var op=(m.from===currentUser.phone)?m.to:m.from;
-var on=(m.from===currentUser.phone)?m.toName:m.fromName;
-if(!map[op])map[op]={phone:op,name:on,last:m.text};
-else map[op].last=m.text;
-}
-});
-var keys=Object.keys(map);
-if(keys.length===0){c.innerHTML="<p style='color:#777;'>لا توجد رسائل</p>";}
-else{
-c.innerHTML="";
-keys.forEach(function(k){
-var x=map[k];
-c.innerHTML+='<div class="chat-item" onclick="openChat(\''+x.phone+'\',\''+x.name+'\')"><img src="https://via.placeholder.com/60/008653/ffffff?text='+x.name.charAt(0)+'"><div style="flex:1;"><b>'+x.name+'</b><div class="msg-preview">'+x.last+'</div></div><span>›</span></div>';
-});
-}
-document.getElementById("chatsList").style.display="block";
-document.getElementById("chatWindow").style.display="none";
-showModal("messagesModal");
-}
-
-function contactSeller(phone,name){
-if(!currentUser){alert("سجّل الدخول");return;}
-closeModal("productModal");
-openMessages();
-openChat(phone,name);
-}
-
-function openChat(phone,name){
-currentChatWith={phone:phone,name:name};
-document.getElementById("chatsList").style.display="none";
-document.getElementById("chatWindow").style.display="block";
-document.getElementById("chatWithName").textContent="💬 "+name;
-renderChatMessages();
-}
-
-function backToChats(){openMessages();}
-
-function renderChatMessages(){
-var c=document.getElementById("chatMessages");
-var all=safeLoad("marketDZ_messages",[]);
-c.innerHTML="";
-all.forEach(function(m){
-if((m.from===currentUser.phone&&m.to===currentChatWith.phone)||(m.from===currentChatWith.phone&&m.to===currentUser.phone)){
-var cls=(m.from===currentUser.phone)?"msg-me":"msg-other";
-c.innerHTML+='<div class="'+cls+'">'+m.text+'</div>';
-}
-});
-c.scrollTop=c.scrollHeight;
-}
-
-function sendMessage(){
-var t=document.getElementById("chatInput").value.trim();
-if(!t)return;
-var all=safeLoad("marketDZ_messages",[]);
-all.push({from:currentUser.phone,fromName:currentUser.name,to:currentChatWith.phone,toName:currentChatWith.name,text:t,time:Date.now(),read:false});
-safeSave("marketDZ_messages",all);
-document.getElementById("chatInput").value="";
-renderChatMessages();
-}
-
-function openAppSettings(){showModal("appSettingsModal");}
-
-function toggleDarkMode(){
-var on=document.getElementById("darkToggle").checked;
-if(on){
-document.body.style.background="#1e1e1e";
-document.body.style.color="#eee";
-document.querySelectorAll(".card,.box,.categories button,.search input,.menu-item,.chat-item,.review").forEach(function(el){el.style.background="#2a2a2a";el.style.color="#eee";});
-}else{
-document.body.style.background="#f5f6f7";
-document.body.style.color="#222";
-document.querySelectorAll(".card,.box,.categories button,.search input,.menu-item,.chat-item,.review").forEach(function(el){el.style.background="";el.style.color="";});
-}
-localStorage.setItem("marketDZ_dark",on?"1":"0");
-}
-
-function deleteAccount(){
-if(!confirm("⚠️ حذف الحساب؟"))return;
-var us=safeLoad("marketDZ_users",[]);
-us=us.filter(function(u){return u.phone!==currentUser.phone;});
-safeSave("marketDZ_users",us);
-localStorage.removeItem("marketDZ_currentUser");
-currentUser=null;
-alert("تم الحذف");
-closeModal("appSettingsModal");
-}
-
-function logout(){
-if(!confirm("خروج؟"))return;
-currentUser=null;
-localStorage.removeItem("marketDZ_currentUser");
-alert("تم الخروج");
-closeModal("accountModal");
-}
-
-async function loadProducts(){
-  try {
-    const firebaseProducts = await loadProductsFirebase();
-    if (firebaseProducts && firebaseProducts.length > 0) {
-      products = firebaseProducts;
-    } else {
-      var saved = localStorage.getItem("marketDZ_products");
-      if (saved) { try { products = JSON.parse(saved); } catch(e) { products = []; } }
-    }
-  } catch(e) {
-    var saved = localStorage.getItem("marketDZ_products");
-    if (saved) { try { products = JSON.parse(saved); } catch(e) { products = []; } }
-  }
-  renderProducts();
-}
-
-setTimeout(function(){ loadProducts(); }, 1500);
-
-
-if(localStorage.getItem("marketDZ_dark")==="1"){
-document.getElementById("darkToggle").checked=true;
-toggleDarkMode();
+    var c=document.getElementById("ordersList");
+    var mp=products.filter(function(p){return currentUser && p.ownerEmail===currentUser.email;});
+    if(mp.length===0){c.innerHTML="<p style='color:#777;'>لا توجد منتجات منشورة لك</p>";return;}
+    c.innerHTML="";
+    mp.forEach(function(p){
+        c.innerHTML+='<div style="display:flex;gap:10px;padding:12px;background:#f4f4f4;border-radius:12px;margin-bottom:10px;"><img src="'+p.images[0]+'" style="width:60px;height:60px;border-radius:10px;object-fit:cover;"><div style="flex:1;"><b>'+p.name+'</b><div style="color:#008653;font-weight:bold;">'+Number(p.price).toLocaleString()+' دج</div></div></div>';
+    });
+    showModal("ordersModal");
 }
 </script>
-<script src="firebase-config.js"></script>
-<script type="module" src="app.js"></script>
 </body>
 </html>
