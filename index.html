@@ -629,13 +629,24 @@ alert("تم الخروج");
 closeModal("accountModal");
 }
 
-function loadProducts(){
-var saved=localStorage.getItem("marketDZ_products");
-if(saved){try{products=JSON.parse(saved);}catch(e){products=[];}}
+async function loadProducts(){
+  try {
+    const firebaseProducts = await loadProductsFirebase();
+    if (firebaseProducts && firebaseProducts.length > 0) {
+      products = firebaseProducts;
+    } else {
+      var saved = localStorage.getItem("marketDZ_products");
+      if (saved) { try { products = JSON.parse(saved); } catch(e) { products = []; } }
+    }
+  } catch(e) {
+    var saved = localStorage.getItem("marketDZ_products");
+    if (saved) { try { products = JSON.parse(saved); } catch(e) { products = []; } }
+  }
+  renderProducts();
 }
 
 loadProducts();
-renderProducts();
+
 
 if(localStorage.getItem("marketDZ_dark")==="1"){
 document.getElementById("darkToggle").checked=true;
