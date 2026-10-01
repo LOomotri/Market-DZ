@@ -9,6 +9,7 @@
 <script>
   (function(){
     try {
+      // ⚠️ استبدل YOUR_PUBLIC_KEY بالمفتاح العام الخاص بك من حسابك على EmailJS
       emailjs.init("YOUR_PUBLIC_KEY");
     } catch(e) {}
   })();
@@ -216,7 +217,7 @@ header{background:#004d35;padding:18px;color:white}
 
 <div id="appSettingsModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('appSettingsModal')">×</button>
-<h2>🛠️ إعدادات التطبيق</h2>
+<h2>🛠 إعدادات التطبيق</h2>
 <div style="display:flex;justify-content:space-between;padding:12px;background:#f4f4f4;border-radius:10px;margin-bottom:10px;">
 <span>🌙 الوضع المظلم</span>
 <input id="darkToggle" type="checkbox" style="width:22px;height:22px;" onchange="toggleDarkMode()">
@@ -427,11 +428,11 @@ if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صال�
 generatedOtp=Math.floor(100000+Math.random()*900000).toString();
 var statusEl=document.getElementById(statusId);
 var btnEl=document.getElementById("otpBtn");
-if(statusEl)statusEl.textContent="⏳ جاري إرسال البريد الإلكتروني الفعلي...";
+if(statusEl)statusEl.textContent="⏳ جاري إرسال البريد الإلكتروني...";
 if(btnEl)btnEl.disabled=true;
 
 if(typeof emailjs !== "undefined") {
-  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+  emailjs.send("service_29tyoia", "YOUR_TEMPLATE_ID", {
     to_email: e,
     otp_code: generatedOtp
   }).then(function(response) {
@@ -439,13 +440,13 @@ if(typeof emailjs !== "undefined") {
     alert("📩 تم إرسال رسالة بريد إلكتروني تحتوي على رمز التحقق (OTP) إلى: " + e);
     if(btnEl)btnEl.disabled=false;
   }, function(error) {
-    if(statusEl)statusEl.textContent="❌ فشل الإرسال، تحقق من مفاتيح EmailJS";
+    if(statusEl)statusEl.textContent="❌ فشل الإرسال، تحقق من Template ID أو Public Key";
     alert("❌ خطأ في الإرسال: " + JSON.stringify(error));
     if(btnEl)btnEl.disabled=false;
   });
 } else {
-  alert("رمز التحقق (للتجربة المباشرة): " + generatedOtp);
-  if(statusEl)statusEl.textContent="✅ تم توليد الرمز";
+  alert("رمز التحقق: " + generatedOtp);
+  if(statusEl)statusEl.textContent="✅ تم التوليد";
   if(btnEl)btnEl.disabled=false;
 }
 }
@@ -541,7 +542,7 @@ if(statusEl)statusEl.textContent="⏳ جاري إرسال البريد...";
 if(btnEl)btnEl.disabled=true;
 
 if(typeof emailjs !== "undefined") {
-  emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+  emailjs.send("service_29tyoia", "YOUR_TEMPLATE_ID", {
     to_email: currentUser.email,
     otp_code: passwordOtp
   }).then(function(response) {
