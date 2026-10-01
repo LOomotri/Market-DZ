@@ -9,8 +9,8 @@
 <script>
   (function(){
     try {
-      // ⚠️ استبدل YOUR_PUBLIC_KEY بالمفتاح العام الخاص بك من حسابك على EmailJS
-      emailjs.init("YOUR_PUBLIC_KEY");
+      // تم دمج المفتاح الذي أرسلته هنا
+      emailjs.init("504YTDfK825_yUBOM");
     } catch(e) {}
   })();
 </script>
@@ -440,7 +440,7 @@ if(typeof emailjs !== "undefined") {
     alert("📩 تم إرسال رسالة بريد إلكتروني تحتوي على رمز التحقق (OTP) إلى: " + e);
     if(btnEl)btnEl.disabled=false;
   }, function(error) {
-    if(statusEl)statusEl.textContent="❌ فشل الإرسال، تحقق من Template ID أو Public Key";
+    if(statusEl)statusEl.textContent="❌ فشل الإرسال، تحقق من Template ID";
     alert("❌ خطأ في الإرسال: " + JSON.stringify(error));
     if(btnEl)btnEl.disabled=false;
   });
