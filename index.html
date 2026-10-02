@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Market DZ - سوق الجزائر الاحترافي</title>
-<!-- تضمين مكتبة Supabase للاتصال السحابي -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- تضمين مكتبة EmailJS للإرسال البريدي -->
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
   const SUPABASE_URL = "https://wxtffloscqmfhjjojukq.supabase.co";
@@ -95,7 +93,6 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 </head>
 <body>
 
-<!-- نافذة شروط الاستخدام وإخلاء المسؤولية -->
 <div id="welcomeTermsModal" class="modal" style="display:flex; z-index:9999;">
 <div class="box" style="max-width:550px; text-align:right;">
 <h2 style="color:var(--primary); text-align:center;">📌 شروط الاستخدام وإخلاء المسؤولية</h2>
@@ -374,18 +371,10 @@ async function publishProduct() {
         showModal("subscriptionModal");
         return;
       }
-    } else {
-      let userProds = products.filter(p => p.ownerEmail === currentUser.email);
-      if(userProds.length >= 10) {
-        closeModal("publishModal");
-        showModal("subscriptionModal");
-        return;
-      }
     }
   }
 
   var newProd = {
-    id: Date.now(),
     name: name,
     price: Number(price),
     condition: condition,
@@ -432,8 +421,6 @@ async function loadProducts() {
         promoted: p.promoted || false
       }));
     }
-  } else {
-    products = safeLoad("marketDZ_products", []);
   }
   products.sort((a, b) => (b.promoted === true) - (a.promoted === true));
   searchProducts();
@@ -530,7 +517,7 @@ async function openAccountMenu() {
   if(!currentUser) { showModal("loginModal"); switchAuthTab("login"); return; }
   document.getElementById("menuName").textContent = currentUser.name || "المستخدم";
   document.getElementById("menuEmail").textContent = currentUser.email || "";
-  document.getElementById("subStatus").textContent = currentUser.isSubscribed ? "⭐ حساب مشترك (غير محدود)" : "📦 حساب مجاني (حد أقصى 10 منتجات)";
+  document.getElementById("subStatus").textContent = currentUser.is_subscribed ? "⭐ حساب مشترك (غير محدود)" : "📦 حساب مجاني (حد أقصى 10 منتجات)";
   if(currentUser.avatar) document.getElementById("menuAvatar").src = currentUser.avatar;
   
   var u = await getUnreadCount();
@@ -563,11 +550,6 @@ async function login() {
     if(error || !data) { alert("❌ لا يوجد حساب بهذا البريد"); return; }
     if(data.password !== pw) { alert("❌ كلمة المرور غير صحيحة"); return; }
     currentUser = data;
-  } else {
-    let users = safeLoad("marketDZ_users", []);
-    let f = users.find(u => u.email.toLowerCase() === e);
-    if(!f || f.password !== pw) { alert("❌ بيانات الدخول خاطئة"); return; }
-    currentUser = f;
   }
 
   safeSave("marketDZ_currentUser", currentUser);
@@ -605,7 +587,6 @@ function sendOtp(inputId, statusId) {
     });
 }
 
-// دالة إنشاء الحساب المعدلة والمضمونة لتفادي أي توقف صامت
 async function register() {
   var n = document.getElementById("regName").value.trim();
   var e = document.getElementById("regEmail").value.trim().toLowerCase();
@@ -617,8 +598,8 @@ async function register() {
   if(!isValidEmail(e)) { alert("❌ صيغة البريد الإلكتروني غير صالحة"); return; }
   if(pw !== pw2) { alert("❌ كلمتا المرور غير متطابقتين"); return; }
   if(!otp) { alert("❌ يرجى إدخال رمز التحقق (OTP)"); return; }
-  if(!generatedOtp) { alert("❌ يرجى النقر على زر 'إرسال الرمز' أولاً للحصول على رمز التحقق"); return; }
-  if(otp !== generatedOtp) { alert("❌ رمز التحقق غير صحيح، تأكد من الأرقام المرسلة لبريدك"); return; }
+  if(!generatedOtp) { alert("❌ يرجى النقر على زر 'إرسال الرمز' أولاً"); return; }
+  if(otp !== generatedOtp) { alert("❌ رمز التحقق غير صحيح"); return; }
 
   if(supabase) {
     try {
@@ -628,23 +609,16 @@ async function register() {
       var nu = { name: n, email: e, password: pw, avatar: "", is_subscribed: false };
       let { error } = await supabase.from('users').insert([nu]);
       if(error) { 
-        alert("❌ خطأ في قاعدة البيانات: " + error.message); 
-        console.error("Supabase Error:", error);
+        alert("❌ خطأ Supabase: " + error.message); 
+        console.error(error);
         return; 
       }
       currentUser = nu;
     } catch(err) {
-      alert("❌ حدث خطأ غير متوقع أثناء الاتصال بقاعدة البيانات.");
+      alert("❌ حدث خطأ غير متوقع.");
       console.error(err);
       return;
     }
-  } else {
-    let users = safeLoad("marketDZ_users", []);
-    if(users.some(u => u.email === e)) { alert("❌ البريد مسجل مسبقاً"); return; }
-    var nu = { name: n, email: e, password: pw, avatar: "", isSubscribed: false };
-    users.push(nu); 
-    safeSave("marketDZ_users", users);
-    currentUser = nu;
   }
 
   safeSave("marketDZ_currentUser", currentUser);
@@ -740,8 +714,6 @@ async function openMessages() {
   if(supabase) {
     let { data } = await supabase.from('messages').select('*').or(`from_email.eq.${currentUser.email},to_email.eq.${currentUser.email}`);
     all = data || [];
-  } else {
-    all = safeLoad("marketDZ_messages", []);
   }
   var map = {};
   all.forEach(function(m) {
@@ -802,7 +774,7 @@ async function sendMessage() {
   var input = document.getElementById("chatInput");
   var t = input ? input.value.trim() : "";
   if(!t || !currentChatWith) return;
-  var nm = { id: Date.now(), from_email: currentUser.email, from_name: currentUser.name, to_email: currentChatWith.email, to_name: currentChatWith.name, text: t, read: false };
+  var nm = { from_email: currentUser.email, from_name: currentUser.name, to_email: currentChatWith.email, to_name: currentChatWith.name, text: t, read: false };
   if(supabase) await supabase.from('messages').insert([nm]);
   input.value = "";
   renderChatMessages();
