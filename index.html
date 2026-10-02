@@ -4,15 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Market DZ - سوق الجزائر</title>
-<!-- تضمين مكتبة EmailJS لإرسال الـ OTP الحقيقي -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<!-- تضمين مكتبة Supabase للاتصال السحابي -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- تضمين مكتبة EmailJS للإرسال البريدي -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  (function(){
-    try {
-      // تم دمج المفتاح الذي أرسلته هنا
-      emailjs.init("504YTDfK825_yUBOM");
-    } catch(e) {}
-  })();
+  const SUPABASE_URL = "https://wxtffloscqmfhjjojukq.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_96qVePKIdhZM6yb5G9F1Ow_P_7nNlQQ";
+  
+  let supabase = null;
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log("تم الاتصال بقاعدة بيانات Supabase بنجاح");
+  } catch(e) {
+    console.error("خطأ في الاتصال بـ Supabase", e);
+  }
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -231,7 +237,7 @@ header{background:#004d35;padding:18px;color:white}
 </div></div>
 
 <script>
-var products=[], users=[], currentCondition="جديد", currentCategory="الكل", currentImages=[], generatedOtp=null, currentUser=null, currentChatWith=null, passwordOtp=null;
+var products=[], currentCondition="جديد", currentCategory="الكل", currentImages=[], generatedOtp=null, currentUser=null, currentChatWith=null, passwordOtp=null;
 
 function safeLoad(k,f){try{var v=localStorage.getItem(k);if(!v)return f;return JSON.parse(v);}catch(e){return f;}}
 function safeSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -276,7 +282,7 @@ reader.readAsDataURL(file);
 });
 }
 
-function publishProduct(){
+async function publishProduct(){
 var name=document.getElementById("pName").value.trim();
 var price=document.getElementById("pPrice").value;
 var condition=document.getElementById("pCondition").value;
@@ -287,14 +293,56 @@ if(!name){alert("اكتب اسم المنتج");return;}
 if(!price){alert("اكتب السعر");return;}
 if(!location){alert("اكتب الولاية");return;}
 if(currentImages.length===0){alert("اختر صورة");return;}
-products.push({id:Date.now(),name:name,price:Number(price),condition:condition,category:category,location:location,description:description,images:currentImages.slice(),rating:0,reviews:[],ownerEmail:currentUser.email,ownerName:currentUser.name,orders:0});
-safeSave("marketDZ_products",products);
-searchProducts();
+
+var newProd = {
+  id: Date.now(),
+  name: name,
+  price: Number(price),
+  condition: condition,
+  category: category,
+  location: location,
+  description: description,
+  images: currentImages.slice(),
+  owner_email: currentUser.email,
+  owner_name: currentUser.name,
+  reviews: []
+};
+
+if(supabase){
+  let { error } = await supabase.from('products').insert([newProd]);
+  if(error){ alert("خطأ في النشر السحابي: " + error.message); return; }
+}
+
+loadProducts();
 closeModal("publishModal");
 ["pName","pPrice","pLocation","pDescription","pImages"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
 var prev=document.getElementById("preview");if(prev)prev.innerHTML="";
 currentImages=[];
-alert("✅ تم نشر المنتج");
+alert("✅ تم نشر المنتج بنجاح سحابياً");
+}
+
+async function loadProducts(){
+if(supabase){
+  let { data, error } = await supabase.from('products').select('*');
+  if(!error && data) {
+    products = data.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      condition: p.condition,
+      category: p.category,
+      location: p.location,
+      description: p.description,
+      images: p.images || [],
+      reviews: p.reviews || [],
+      ownerEmail: p.owner_email,
+      ownerName: p.owner_name
+    }));
+  }
+} else {
+  products = safeLoad("marketDZ_products",[]);
+}
+searchProducts();
 }
 
 function renderProducts(list){
@@ -329,7 +377,7 @@ if(details)details.innerHTML=h;
 showModal("productModal");
 }
 
-function addReview(id){
+async function addReview(id){
 if(!currentUser){alert("سجّل الدخول");return;}
 var p=null;products.forEach(function(x){if(x.id===id)p=x;});
 if(!p)return;
@@ -338,16 +386,21 @@ var t=document.getElementById("reviewText").value.trim();
 if(!n||!t){alert("املأ الحقول");return;}
 if(!p.reviews)p.reviews=[];
 p.reviews.push({name:n,text:t});
-safeSave("marketDZ_products",products);
+
+if(supabase){
+  await supabase.from('products').update({reviews: p.reviews}).eq('id', id);
+}
+loadProducts();
 openProduct(id);
 }
 
-function deleteProduct(id){
+async function deleteProduct(id){
 if(!confirm("حذف؟"))return;
-products=products.filter(function(p){return p.id!==id;});
-safeSave("marketDZ_products",products);
+if(supabase){
+  await supabase.from('products').delete().eq('id', id);
+}
 closeModal("productModal");
-searchProducts();
+loadProducts();
 }
 
 function searchProducts(){
@@ -363,15 +416,16 @@ r.push(p);
 renderProducts(r);
 }
 
-function getUnreadCount(){
+async function getUnreadCount(){
 if(!currentUser)return 0;
-var m=safeLoad("marketDZ_messages",[]);
-var c=0;
-m.forEach(function(x){if(x.to===currentUser.email&&!x.read)c++;});
-return c;
+if(supabase){
+  let { count, error } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('to_email', currentUser.email).eq('read', false);
+  return count || 0;
+}
+return 0;
 }
 
-function openAccountMenu(){
+async function openAccountMenu(){
 if(!currentUser){showModal("loginModal");switchAuthTab("login");return;}
 var mName=document.getElementById("menuName");
 var mEmail=document.getElementById("menuEmail");
@@ -381,7 +435,7 @@ if(currentUser.avatar){
   var mAvatar=document.getElementById("menuAvatar");
   if(mAvatar)mAvatar.src=currentUser.avatar;
 }
-var u=getUnreadCount();
+var u = await getUnreadCount();
 var b=document.getElementById("unreadBadge");
 if(b){if(u>0){b.style.display="inline-block";b.textContent=u;}else{b.style.display="none";}}
 showModal("accountModal");
@@ -401,24 +455,32 @@ tr.style.background="#008653";tr.style.color="white";tl.style.background="#ccc";
 }
 }
 
-function login(){
+async function login(){
 var emailInput=document.getElementById("email");
 var passInput=document.getElementById("password");
 var e=emailInput?emailInput.value.trim().toLowerCase():"";
 var pw=passInput?passInput.value:"";
 if(!e||!pw){alert("أدخل البيانات");return;}
 if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صالح");return;}
-users=safeLoad("marketDZ_users",[]);
-var f=null;
-users.forEach(function(u){if(u.email.toLowerCase()===e)f=u;});
-if(!f){alert("❌ لا يوجد حساب بهذا البريد");return;}
-if(f.password!==pw){alert("❌ كلمة المرور خاطئة");return;}
-currentUser=f;
+
+if(supabase){
+  let { data, error } = await supabase.from('users').select('*').eq('email', e).single();
+  if(error || !data){alert("❌ لا يوجد حساب بهذا البريد");return;}
+  if(data.password!==pw){alert("❌ كلمة المرور خاطئة");return;}
+  currentUser=data;
+} else {
+  let users=safeLoad("marketDZ_users",[]);
+  let f=users.find(u=>u.email.toLowerCase()===e);
+  if(!f || f.password!==pw){alert("❌ بيانات الدخول غير صحيحة");return;}
+  currentUser=f;
+}
+
 safeSave("marketDZ_currentUser",currentUser);
-alert("✅ تم الدخول");
+alert("✅ تم الدخول بنجاح");
 closeModal("loginModal");
 }
 
+// دالة إرسال الرمز عبر EmailJS باستخدام المعرفات الحقيقية الخاصة بك
 function sendOtp(inputId,statusId){
 var inputEl=document.getElementById(inputId);
 var e=inputEl?inputEl.value.trim():"";
@@ -427,31 +489,29 @@ if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صال�
 
 generatedOtp=Math.floor(100000+Math.random()*900000).toString();
 var statusEl=document.getElementById(statusId);
-var btnEl=document.getElementById("otpBtn");
-if(statusEl)statusEl.textContent="⏳ جاري إرسال البريد الإلكتروني...";
-if(btnEl)btnEl.disabled=true;
+if(statusEl)statusEl.textContent="⏳ جاري إرسال الرمز...";
 
-if(typeof emailjs !== "undefined") {
-  emailjs.send("service_29tyoia", "YOUR_TEMPLATE_ID", {
-    to_email: e,
-    otp_code: generatedOtp
-  }).then(function(response) {
-    if(statusEl)statusEl.textContent="✅ تم إرسال الرمز إلى بريدك بنجاح!";
-    alert("📩 تم إرسال رسالة بريد إلكتروني تحتوي على رمز التحقق (OTP) إلى: " + e);
-    if(btnEl)btnEl.disabled=false;
-  }, function(error) {
-    if(statusEl)statusEl.textContent="❌ فشل الإرسال، تحقق من Template ID";
-    alert("❌ خطأ في الإرسال: " + JSON.stringify(error));
-    if(btnEl)btnEl.disabled=false;
-  });
-} else {
-  alert("رمز التحقق: " + generatedOtp);
-  if(statusEl)statusEl.textContent="✅ تم التوليد";
-  if(btnEl)btnEl.disabled=false;
-}
+var serviceID = "service_29tyoia";
+var templateID = "template_whvc2dn";
+var publicKey = "504YTDFk825_yUBOM";
+
+var templateParams = {
+    email: e,
+    رمز_مرور: generatedOtp
+};
+
+emailjs.send(serviceID, templateID, templateParams, publicKey)
+    .then(function(response) {
+        if(statusEl)statusEl.textContent="✅ تم إرسال الرمز إلى بريدك.";
+        alert("📩 تم إرسال رمز التحقق (OTP) إلى بريدك الإلكتروني بنجاح!");
+    }, function(error) {
+        console.error("خطأ في الإرسال:", error);
+        if(statusEl)statusEl.textContent="❌ فشل الإرسال.";
+        alert("❌ حدث خطأ أثناء إرسال البريد، يرجى المحاولة لاحقاً.");
+    });
 }
 
-function register(){
+async function register(){
 var n=document.getElementById("regName").value.trim();
 var e=document.getElementById("regEmail").value.trim().toLowerCase();
 var pw=document.getElementById("regPassword").value;
@@ -462,13 +522,23 @@ if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صال�
 if(pw!==pw2){alert("كلمتا المرور مختلفتان");return;}
 if(!generatedOtp){alert("أرسل رمز التحقق أولاً");return;}
 if(otp!==generatedOtp){alert("❌ رمز التحقق خاطئ");return;}
-users=safeLoad("marketDZ_users",[]);
-var ex=false;
-users.forEach(function(u){if(u.email.toLowerCase()===e)ex=true;});
-if(ex){alert("❌ هذا البريد مسجّل مسبقاً");return;}
-var nu={name:n,email:e,password:pw,avatar:"",createdAt:Date.now()};
-users.push(nu);safeSave("marketDZ_users",users);
-currentUser=nu;safeSave("marketDZ_currentUser",currentUser);
+
+if(supabase){
+  let { data: existing } = await supabase.from('users').select('*').eq('email', e).single();
+  if(existing){alert("❌ هذا البريد مسجّل مسبقاً");return;}
+  let nu={name:n,email:e,password:pw,avatar:""};
+  let { error } = await supabase.from('users').insert([nu]);
+  if(error){alert("خطأ في التسجيل: "+error.message);return;}
+  currentUser=nu;
+} else {
+  let users=safeLoad("marketDZ_users",[]);
+  if(users.some(u=>u.email===e)){alert("❌ البريد مسجّل مسبقاً");return;}
+  let nu={name:n,email:e,password:pw,avatar:""};
+  users.push(nu); safeSave("marketDZ_users",users);
+  currentUser=nu;
+}
+
+safeSave("marketDZ_currentUser",currentUser);
 generatedOtp=null;
 alert("🎉 تم إنشاء الحساب بنجاح");
 closeModal("loginModal");
@@ -484,30 +554,30 @@ if(currentUser.avatar){
 showModal("profileModal");
 }
 
-function changeAvatar(event){
+async function changeAvatar(event){
 var f=event.target.files[0];if(!f)return;
 var r=new FileReader();
-r.onload=function(e){
-var pAvatar=document.getElementById("profileAvatar");
-if(pAvatar)pAvatar.src=e.target.result;
-currentUser.avatar=e.target.result;
-safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.email===currentUser.email)u.avatar=currentUser.avatar;});
-safeSave("marketDZ_users",us);
+r.onload=async function(e){
+  var pAvatar=document.getElementById("profileAvatar");
+  if(pAvatar)pAvatar.src=e.target.result;
+  currentUser.avatar=e.target.result;
+  safeSave("marketDZ_currentUser",currentUser);
+  if(supabase){
+    await supabase.from('users').update({avatar: currentUser.avatar}).eq('email', currentUser.email);
+  }
 };
 r.readAsDataURL(f);
 }
 
-function saveProfile(){
+async function saveProfile(){
 var pName=document.getElementById("profileName");
 var n=pName?pName.value.trim():"";
 if(!n){alert("اكتب الاسم");return;}
 currentUser.name=n;
 safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.email===currentUser.email)u.name=n;});
-safeSave("marketDZ_users",us);
+if(supabase){
+  await supabase.from('users').update({name: n}).eq('email', currentUser.email);
+}
 alert("✅ تم الحفظ");
 closeModal("profileModal");
 }
@@ -518,7 +588,7 @@ if(setEmail)setEmail.value=currentUser.email||"";
 showModal("settingsModal");
 }
 
-function saveEmail(){
+async function saveEmail(){
 var setEmail=document.getElementById("setEmail");
 var e=setEmail?setEmail.value.trim().toLowerCase():"";
 if(!e){alert("أدخل البريد الإلكتروني");return;}
@@ -526,42 +596,21 @@ if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صال�
 var oe=currentUser.email;
 currentUser.email=e;
 safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.email===oe)u.email=e;});
-safeSave("marketDZ_users",us);
-products.forEach(function(pr){if(pr.ownerEmail===oe)pr.ownerEmail=e;});
-safeSave("marketDZ_products",products);
+if(supabase){
+  await supabase.from('users').update({email: e}).eq('email', oe);
+  await supabase.from('products').update({owner_email: e}).eq('owner_email', oe);
+}
 alert("✅ تم تحديث البريد الإلكتروني");
 }
 
 function sendOtpForPassword(){
 passwordOtp=Math.floor(100000+Math.random()*900000).toString();
 var statusEl=document.getElementById("setOtpStatus");
-var btnEl=document.getElementById("passOtpBtn");
-if(statusEl)statusEl.textContent="⏳ جاري إرسال البريد...";
-if(btnEl)btnEl.disabled=true;
-
-if(typeof emailjs !== "undefined") {
-  emailjs.send("service_29tyoia", "YOUR_TEMPLATE_ID", {
-    to_email: currentUser.email,
-    otp_code: passwordOtp
-  }).then(function(response) {
-    if(statusEl)statusEl.textContent="✅ تم إرسال رمز التحديث.";
-    alert("📩 تم إرسال رمز استعادة كلمة المرور إلى بريدك الإلكتروني.");
-    if(btnEl)btnEl.disabled=false;
-  }, function(error) {
-    if(statusEl)statusEl.textContent="❌ فشل الإرسال";
-    alert("❌ خطأ في إرسال البريد: " + JSON.stringify(error));
-    if(btnEl)btnEl.disabled=false;
-  });
-} else {
-  alert("رمز الاستعادة: " + passwordOtp);
-  if(statusEl)statusEl.textContent="✅ تم التوليد";
-  if(btnEl)btnEl.disabled=false;
-}
+if(statusEl)statusEl.textContent="✅ تم توليد الرمز.";
+alert("📩 رمز استعادة كلمة المرور هو: " + passwordOtp);
 }
 
-function savePassword(){
+async function savePassword(){
 var setPass=document.getElementById("setPassword");
 var setOtp=document.getElementById("setOtpCode");
 var pw=setPass?setPass.value.trim():"";
@@ -571,9 +620,9 @@ if(!passwordOtp){alert("أرسل رمز التحقق أولاً");return;}
 if(otp!==passwordOtp){alert("❌ رمز التحقق خاطئ");return;}
 currentUser.password=pw;
 safeSave("marketDZ_currentUser",currentUser);
-var us=safeLoad("marketDZ_users",[]);
-us.forEach(function(u){if(u.email===currentUser.email)u.password=pw;});
-safeSave("marketDZ_users",us);
+if(supabase){
+  await supabase.from('users').update({password: pw}).eq('email', currentUser.email);
+}
 passwordOtp=null;
 alert("✅ تم تحديث كلمة المرور");
 closeModal("settingsModal");
@@ -597,18 +646,22 @@ c.innerHTML+='<div style="display:flex;gap:10px;padding:12px;background:#f4f4f4;
 showModal("ordersModal");
 }
 
-function openMessages(){
+async function openMessages(){
 var c=document.getElementById("chatsList");
 if(!c)return;
-var all=safeLoad("marketDZ_messages",[]);
+let all = [];
+if(supabase){
+  let { data } = await supabase.from('messages').select('*').or(`from_email.eq.${currentUser.email},to_email.eq.${currentUser.email}`);
+  all = data || [];
+} else {
+  all = safeLoad("marketDZ_messages",[]);
+}
 var map={};
 all.forEach(function(m){
-if(currentUser && (m.from===currentUser.email||m.to===currentUser.email)){
-var op=(m.from===currentUser.email)?m.to:m.from;
-var on=(m.from===currentUser.email)?m.toName:m.fromName;
+var op=(m.from_email===currentUser.email)?m.to_email:m.from_email;
+var on=(m.from_email===currentUser.email)?m.to_name:m.from_name;
 if(!map[op])map[op]={email:op,name:on,last:m.text};
 else map[op].last=m.text;
-}
 });
 var keys=Object.keys(map);
 if(keys.length===0){c.innerHTML="<p style='color:#777;'>لا توجد رسائل</p>";}
@@ -619,10 +672,8 @@ var x=map[k];
 c.innerHTML+='<div class="chat-item" onclick="openChat(\''+x.email+'\',\''+x.name+'\')"><img src="https://via.placeholder.com/60/008653/ffffff?text='+(x.name?x.name.charAt(0):'U')+'"><div style="flex:1;"><b>'+x.name+'</b><div class="msg-preview">'+x.last+'</div></div><span>›</span></div>';
 });
 }
-var chatsListEl=document.getElementById("chatsList");
-var chatWinEl=document.getElementById("chatWindow");
-if(chatsListEl)chatsListEl.style.display="block";
-if(chatWinEl)chatWinEl.style.display="none";
+document.getElementById("chatsList").style.display="block";
+document.getElementById("chatWindow").style.display="none";
 showModal("messagesModal");
 }
 
@@ -635,38 +686,46 @@ openChat(email,name);
 
 function openChat(email,name){
 currentChatWith={email:email,name:name};
-var chatsListEl=document.getElementById("chatsList");
-var chatWinEl=document.getElementById("chatWindow");
-var chatNameEl=document.getElementById("chatWithEmail");
-if(chatsListEl)chatsListEl.style.display="none";
-if(chatWinEl)chatWinEl.style.display="block";
-if(chatNameEl)chatNameEl.textContent="💬 "+name;
+document.getElementById("chatsList").style.display="none";
+document.getElementById("chatWindow").style.display="block";
+document.getElementById("chatWithEmail").textContent="💬 "+name;
 renderChatMessages();
 }
 
 function backToChats(){openMessages();}
 
-function renderChatMessages(){
+async function renderChatMessages(){
 var c=document.getElementById("chatMessages");
 if(!c)return;
-var all=safeLoad("marketDZ_messages",[]);
+let all = [];
+if(supabase){
+  let { data } = await supabase.from('messages').select('*').or(`and(from_email.eq.${currentUser.email},to_email.eq.${currentChatWith.email}),and(from_email.eq.${currentChatWith.email},to_email.eq.${currentUser.email})`).order('created_at', { ascending: true });
+  all = data || [];
+  await supabase.from('messages').update({read: true}).eq('from_email', currentChatWith.email).eq('to_email', currentUser.email);
+}
 c.innerHTML="";
 all.forEach(function(m){
-if(currentUser && ((m.from===currentUser.email&&m.to===currentChatWith.email)||(m.from===currentChatWith.email&&m.to===currentUser.email))){
-var cls=(m.from===currentUser.email)?"msg-me":"msg-other";
+var cls=(m.from_email===currentUser.email)?"msg-me":"msg-other";
 c.innerHTML+='<div class="'+cls+'">'+m.text+'</div>';
-}
 });
 c.scrollTop=c.scrollHeight;
 }
 
-function sendMessage(){
+async function sendMessage(){
 var chatInput=document.getElementById("chatInput");
 var t=chatInput?chatInput.value.trim():"";
 if(!t || !currentUser)return;
-var all=safeLoad("marketDZ_messages",[]);
-all.push({from:currentUser.email,fromName:currentUser.name,to:currentChatWith.email,toName:currentChatWith.name,text:t,time:Date.now(),read:false});
-safeSave("marketDZ_messages",all);
+var newMsg = {
+  from_email: currentUser.email,
+  from_name: currentUser.name,
+  to_email: currentChatWith.email,
+  to_name: currentChatWith.name,
+  text: t,
+  read: false
+};
+if(supabase){
+  await supabase.from('messages').insert([newMsg]);
+}
 if(chatInput)chatInput.value="";
 renderChatMessages();
 }
@@ -674,8 +733,7 @@ renderChatMessages();
 function openAppSettings(){showModal("appSettingsModal");}
 
 function toggleDarkMode(){
-var darkToggle=document.getElementById("darkToggle");
-var on=darkToggle?darkToggle.checked:false;
+var on=document.getElementById("darkToggle").checked;
 if(on){
 document.body.style.background="#1e1e1e";
 document.body.style.color="#eee";
@@ -688,11 +746,11 @@ document.querySelectorAll(".card,.box,.categories button,.search input,.menu-ite
 safeSave("marketDZ_dark",on?"1":"0");
 }
 
-function deleteAccount(){
+async function deleteAccount(){
 if(!confirm("⚠️ حذف الحساب؟"))return;
-var us=safeLoad("marketDZ_users",[]);
-us=us.filter(function(u){return currentUser && u.email!==currentUser.email;});
-safeSave("marketDZ_users",us);
+if(supabase){
+  await supabase.from('users').delete().eq('email', currentUser.email);
+}
 localStorage.removeItem("marketDZ_currentUser");
 currentUser=null;
 alert("تم الحذف");
@@ -707,17 +765,11 @@ alert("تم الخروج");
 closeModal("accountModal");
 }
 
-function loadProducts(){
-products=safeLoad("marketDZ_products",[]);
-}
-
 loadProducts();
 currentUser=safeLoad("marketDZ_currentUser",null);
-searchProducts();
 
 if(safeLoad("marketDZ_dark","0")==="1"){
-var darkToggle=document.getElementById("darkToggle");
-if(darkToggle)darkToggle.checked=true;
+document.getElementById("darkToggle").checked=true;
 toggleDarkMode();
 }
 </script>
