@@ -4,29 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Market DZ - سوق الجزائر الاحترافي</title>
-<!-- تضمين مكتبات Firebase الإصدار 10 -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    // إعدادات مشروعك على Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyDummyKeyForMarketDZ-413a9",
-        authDomain: "market-dz-413a9.firebaseapp.com",
-        projectId: "market-dz-413a9",
-        storageBucket: "market-dz-413a9.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:123456789:web:abcdef"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    window.auth = getAuth(app);
-    window.db = getFirestore(app);
-    
-    console.log("تم الاتصال بـ Firebase بنجاح!");
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  const SUPABASE_URL = "https://foozttxylvtqetxryao.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_YxT0ebww6f81cy_uKLWbpQ_XzVrJ_u-";
+  
+  let sbClient = null;
+  try {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log("تم الاتصال بقاعدة بيانات Supabase بنجاح");
+  } catch(e) {
+    console.error("خطأ في الاتصال بـ Supabase", e);
+  }
+</script>
 <style>
 :root {
   --primary: #004d35;
@@ -85,6 +76,7 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 .delete { background: #d32f2f; color: white; border: 0; padding: 11px; border-radius: 8px; cursor: pointer; margin-top: 12px; width: 100%; font-size: 16px; font-weight: bold; }
 .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #f4f4f4; border-radius: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .menu-item:hover { background: #ececec; }
+.badge { background: #d32f2f; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; }
 @media(max-width: 800px) { .products { grid-template-columns: repeat(2, 1fr); } }
 @media(max-width: 450px) { .card img { height: 155px; } }
 </style>
@@ -96,7 +88,9 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <h2 style="color:var(--primary); text-align:center;">📌 شروط الاستخدام وإخلاء المسؤولية</h2>
 <div style="background:#f9f9f9; padding:15px; border-radius:10px; max-height:220px; overflow-y:auto; font-size:14px; line-height:1.6; color:#444; margin-bottom:15px; border:1px solid #ddd;">
   <p><b>أهلاً بك في منصة Market DZ.</b></p><br>
-  <p>1. <b>إخلاء المسؤولية:</b> المنصة وسيط إلكتروني لعرض المنتجات ولا تتحمل الإدارة مسؤولية المعاملات.</p><br>
+  <p>1. <b>إخلاء المسؤولية:</b> المنصة مجرد وسيط إلكتروني لعرض المنتجات، ولا تتحمل إدارة الموقع أي مسؤولية قانونية عن جودة السلع أو معاملات الدفع.</p><br>
+  <p>2. <b>سياسة الخصوصية:</b> نحترم سرية بياناتك ونستخدمها حصرياً لتأمين حسابك ومراسلاتك.</p><br>
+  <p>3. <b>قوانين النشر:</b> الحد الأقصى للنشر المجاني هو 10 منتجات.</p>
 </div>
 <button class="submit" onclick="acceptTerms()" style="background:var(--primary);">موافق (OK)</button>
 </div>
@@ -143,9 +137,25 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <div class="field"><label>الصور</label><input id="pImages" type="file" accept="image/*" multiple onchange="previewImages(event)"><div id="preview" class="preview"></div></div>
 <div class="field" style="display:flex; align-items:center; gap:10px; background:#fff3e0; padding:12px; border-radius:8px;">
 <input id="pPromoted" type="checkbox" style="width:20px; height:20px;">
-<label for="pPromoted" style="margin:0; color:#e65100; cursor:pointer;">⭐ ترويج هذا المنتج</label>
+<label for="pPromoted" style="margin:0; color:#e65100; cursor:pointer;">⭐ ترويج هذا المنتج (يظهر في المقدمة)</label>
 </div>
 <button class="submit" onclick="publishProduct()">نشر المنتج</button>
+</div></div>
+
+<div id="subscriptionModal" class="modal"><div class="box" style="text-align:center;">
+<button class="close" onclick="closeModal('subscriptionModal')">×</button>
+<h2 style="color:var(--secondary);">⭐ ترقية الحساب (الباقة غير المحدودة)</h2>
+<p style="color:#555; margin-bottom:15px;">لقد وصلت إلى الحد الأقصى (10 منتجات). اشترك الآن لنشر منتجات بلا حدود!</p>
+<div style="background:#f9f9f9; padding:20px; border-radius:12px; margin-bottom:20px; border:2px solid var(--secondary);">
+  <h3 style="color:#333; font-size:24px; margin-bottom:5px;">$6 / شهرياً</h3>
+  <p style="color:#777; font-size:14px;">نشر غير محدود + أولوية ظهور وترويج للمنتجات</p>
+</div>
+<div class="field"><label style="text-align:right;">رقم بطاقة الفيزا / البنك</label><input type="text" placeholder="4000 0000 0000 0000" style="text-align:center; letter-spacing:2px;"></div>
+<div style="display:flex; gap:10px;">
+  <div class="field" style="flex:1;"><label style="text-align:right;">تاريخ الانتهاء</label><input type="text" placeholder="MM/YY"></div>
+  <div class="field" style="flex:1;"><label style="text-align:right;">رمز الأمان (CVV)</label><input type="password" maxlength="3" placeholder="123"></div>
+</div>
+<button class="submit" onclick="paySubscription()" style="background:var(--accent); margin-top:10px;">💳 إتمام الاشتراك وتفعيل الحساب (6$)</button>
 </div></div>
 
 <div id="loginModal" class="modal"><div class="box">
@@ -155,24 +165,106 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <button id="tabRegister" class="submit" style="background:#ccc; color:#333;" onclick="switchAuthTab('register')">حساب جديد</button>
 </div>
 <div id="loginForm">
-<div class="field"><label>البريد الإلكتروني</label><input id="email" type="email"></div>
+<div class="field"><label>البريد الإلكتروني</label><input id="email" type="email" placeholder="example@domain.com"></div>
 <div class="field"><label>كلمة المرور</label><input id="password" type="password"></div>
-<button class="submit" onclick="loginUser()">دخول</button>
+<button class="submit" onclick="login()">دخول</button>
 </div>
 <div id="registerForm" style="display:none;">
-<div class="field"><label>البريد الإلكتروني</label><input id="regEmail" type="email"></div>
+<div class="field"><label>الاسم</label><input id="regName" type="text"></div>
+<div class="field"><label>البريد الإلكتروني</label><input id="regEmail" type="email" placeholder="example@domain.com"></div>
 <div class="field"><label>كلمة المرور</label><input id="regPassword" type="password"></div>
-<button class="submit" onclick="registerUser()">إنشاء الحساب</button>
+<div class="field"><label>تأكيد كلمة المرور</label><input id="regPassword2" type="password"></div>
+<div class="field"><label>رمز التحقق (OTP)</label>
+<div style="display:flex; gap:8px;">
+<input id="otpCode" type="text" maxlength="6" style="flex:1; text-align:center; letter-spacing:6px; font-weight:bold;">
+<button type="button" id="otpBtn" class="submit" style="width:auto; padding:13px 18px; background:var(--accent);" onclick="sendOtp('regEmail','otpStatus')">إرسال الرمز</button>
+</div>
+<small id="otpStatus" style="color:#777;"></small>
+</div>
+<button class="submit" onclick="register()">إنشاء الحساب</button>
 </div>
 </div></div>
 
 <div id="accountModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('accountModal')">×</button>
 <div style="text-align:center; margin-bottom:20px;">
+<img id="menuAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--secondary);">
 <h2 id="menuName">المستخدم</h2>
 <p id="menuEmail" style="color:#777;"></p>
+<p id="subStatus" style="color:var(--accent); font-weight:bold; margin-top:5px;"></p>
 </div>
-<button class="delete" onclick="logoutUser()">🚪 خروج</button>
+<div class="menu-item" onclick="closeModal('accountModal');showModal('subscriptionModal')"><span>⭐ ترقية الحساب غير المحدود (6$)</span><span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openProfile()"><span>👤 الملف الشخصي</span><span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openSettings()"><span>⚙️ الإعدادات</span><span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openPrivacy()"><span>🔒 الخصوصية</span><span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openOrders()"><span>📦 منتجاتي</span><span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openMessages()"><span>💬 الرسائل</span><span><span id="unreadBadge" class="badge" style="display:none;">0</span>›</span></div>
+<div class="menu-item" onclick="closeModal('accountModal');openAppSettings()"><span>🛠️ إعدادات التطبيق</span><span>›</span></div>
+<button class="delete" style="background:#555; margin-top:15px;" onclick="logout()">🚪 خروج</button>
+</div></div>
+
+<div id="profileModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('profileModal')">×</button>
+<h2>👤 الملف الشخصي</h2>
+<div style="text-align:center;">
+<img id="profileAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--secondary);">
+<div class="field"><label>الصورة الشخصية</label><input type="file" accept="image/*" onchange="changeAvatar(event)"></div>
+</div>
+<div class="field"><label>الاسم</label><input id="profileName" type="text"></div>
+<button class="submit" onclick="saveProfile()">حفظ التعديلات</button>
+</div></div>
+
+<div id="settingsModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('settingsModal')">×</button>
+<h2>⚙️ إعدادات الحساب</h2>
+<div class="field"><label>البريد الإلكتروني</label><input id="setEmail" type="email"></div>
+<button class="submit" onclick="saveEmail()">حفظ البريد</button>
+<hr style="margin:20px 0;">
+<div class="field"><label>كلمة المرور الجديدة</label><input id="setPassword" type="password"></div>
+<div class="field"><label>رمز التحقق (OTP)</label>
+<div style="display:flex; gap:8px;">
+<input id="setOtpCode" type="text" maxlength="6" style="flex:1; text-align:center; letter-spacing:6px; font-weight:bold;">
+<button type="button" id="passOtpBtn" class="submit" style="width:auto; padding:13px 18px; background:var(--accent);" onclick="sendOtpForPassword()">إرسال الرمز</button>
+</div>
+<small id="setOtpStatus" style="color:#777;"></small>
+</div>
+<button class="submit" onclick="savePassword()">تحديث كلمة المرور</button>
+</div></div>
+
+<div id="privacyModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('privacyModal')">×</button>
+<h2>🔒 الخصوصية وإخلاء المسؤولية</h2>
+<div style="padding:14px; background:#f4f4f4; border-radius:12px; line-height:1.6;">
+  <p><b>البريد الإلكتروني:</b> <span id="privacyEmail">—</span></p><br>
+  <p><b>تنبيه قانوني:</b> منصة Market DZ وسيط عرض فقط، وإدارة الموقع لا تتحمل أي مسؤولية عن جودة المنتجات أو معاملات البيع المباشر.</p>
+</div>
+</div></div>
+
+<div id="ordersModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('ordersModal')">×</button>
+<h2>📦 منتجاتي المنشورة</h2>
+<div id="ordersList"></div>
+</div></div>
+
+<div id="messagesModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('messagesModal')">×</button>
+<h2>💬 صندوق الرسائل</h2>
+<div id="chatsList"></div>
+<div id="chatWindow" style="display:none;">
+<button class="submit" style="background:#ccc; color:#333; margin-bottom:10px; width:auto;" onclick="backToChats()">‹ رجوع للرسائل</button>
+<h3 id="chatWithEmail"></h3>
+<div class="chat-window" id="chatMessages"></div>
+<div class="chat-input">
+<input id="chatInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter')sendMessage()">
+<button onclick="sendMessage()">إرسال</button>
+</div>
+</div>
+</div></div>
+
+<div id="appSettingsModal" class="modal"><div class="box">
+<button class="close" onclick="closeModal('appSettingsModal')">×</button>
+<h2>🛠 إعدادات التطبيق</h2>
+<button class="delete" onclick="deleteAccount()" style="margin-top:10px;">🗑️ حذف الحساب نهائياً</button>
 </div></div>
 
 <div id="productModal" class="modal"><div class="box">
@@ -180,63 +272,74 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <div id="productDetails"></div>
 </div></div>
 
-<script type="module">
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script>
+var products = [], currentCondition = "جديد", currentCategory = "الكل", currentImages = [], generatedOtp = null, currentUser = null, currentChatWith = null, passwordOtp = null;
 
-window.products = [];
-window.currentCondition = "جديد";
-window.currentCategory = "الكل";
-window.currentImages = [];
-window.currentUser = null;
+function safeLoad(k, f) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch(e) { return f; } }
+function safeSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function closeModal(id) { var m = document.getElementById(id); if(m) m.style.display = "none"; }
+function showModal(id) { var m = document.getElementById(id); if(m) m.style.display = "flex"; }
 
-window.acceptTerms = function() {
+function acceptTerms() {
   localStorage.setItem("marketDZ_acceptedTerms", "true");
-  document.getElementById("welcomeTermsModal").style.display = "none";
-};
+  closeModal("welcomeTermsModal");
+}
 
-window.closeModal = function(id) { document.getElementById(id).style.display = "none"; };
-window.showModal = function(id) { document.getElementById(id).style.display = "flex"; };
-
-window.filterCondition = function(cond) {
-  window.currentCondition = cond;
-  ["condAll", "condNew", "condUsed"].forEach(i => document.getElementById(i).classList.remove("active"));
+function filterCondition(cond) {
+  currentCondition = cond;
+  ["condAll", "condNew", "condUsed"].forEach(function(i){ var el = document.getElementById(i); if(el) el.classList.remove("active"); });
   if(cond === "الكل") document.getElementById("condAll").classList.add("active");
   else if(cond === "جديد") document.getElementById("condNew").classList.add("active");
   else document.getElementById("condUsed").classList.add("active");
-  window.searchProducts();
-};
+  searchProducts();
+}
 
-window.filterCategory = function(cat, btn) {
-  window.currentCategory = cat;
-  document.querySelectorAll("#categoriesBar button").forEach(b => b.classList.remove("active"));
+function filterCategory(cat, btn) {
+  currentCategory = cat;
+  document.querySelectorAll("#categoriesBar button").forEach(function(b){ b.classList.remove("active"); });
   if(btn) btn.classList.add("active");
-  window.searchProducts();
-};
+  searchProducts();
+}
 
-window.openPublish = function() {
-  if(!window.currentUser) { alert("سجّل الدخول أولًا"); window.openAccountMenu(); return; }
-  window.showModal("publishModal");
-};
+function openPublish() {
+  if(!currentUser) { alert("سجّل الدخول أولًا"); openAccountMenu(); return; }
+  var condSelect = document.getElementById("pCondition");
+  if(condSelect) condSelect.value = (currentCondition === "الكل") ? "جديد" : currentCondition;
+  showModal("publishModal");
+}
 
-window.previewImages = function(event) {
-  window.currentImages = [];
-  var preview = document.getElementById("preview");
+function previewImages(event) {
+  currentImages = [];
+  var preview = document.getElementById("preview"); if(!preview) return;
   preview.innerHTML = "";
-  Array.from(event.target.files).forEach(file => {
+  Array.from(event.target.files).forEach(function(file) {
+    if(!file.type.startsWith("image/")) return;
     var reader = new FileReader();
-    reader.onload = e => {
-      window.currentImages.push(e.target.result);
+    reader.onload = function(e) {
+      currentImages.push(e.target.result);
       var img = document.createElement("img");
       img.src = e.target.result;
       preview.appendChild(img);
     };
     reader.readAsDataURL(file);
   });
-};
+}
 
-window.publishProduct = async function() {
-  if(!window.currentUser) { alert("سجّل الدخول أولاً"); return; }
+async function paySubscription() {
+  if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
+  currentUser.is_subscribed = true;
+  safeSave("marketDZ_currentUser", currentUser);
+  if(sbClient) {
+    await sbClient.from('users').update({is_subscribed: true}).eq('email', currentUser.email);
+  }
+  alert("🎉 تم الاشتراك بنجاح! يمكنك الآن نشر منتجات بلا حدود.");
+  closeModal("subscriptionModal");
+}
+
+async function publishProduct() {
+  if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
+
   var name = document.getElementById("pName").value.trim();
   var price = document.getElementById("pPrice").value;
   var condition = document.getElementById("pCondition").value;
@@ -245,118 +348,266 @@ window.publishProduct = async function() {
   var description = document.getElementById("pDescription").value.trim();
   var isPromoted = document.getElementById("pPromoted").checked;
 
-  if(!name || !price || !location || window.currentImages.length === 0) {
-    alert("يرجى ملء الحقول الإجبارية وإضافة صورة واحدة على الأقل");
-    return;
+  if(!name) { alert("اكتب اسم المنتج"); return; }
+  if(!price) { alert("اكتب السعر"); return; }
+  if(!location) { alert("اكتب الولاية"); return; }
+  if(currentImages.length === 0) { alert("اختر صورة واحدة على الأقل للمنتج"); return; }
+
+  if(!currentUser.is_subscribed) {
+    if(sbClient) {
+      let { count } = await sbClient.from('products').select('*', { count: 'exact', head: true }).eq('owner_email', currentUser.email);
+      if(count >= 10) {
+        closeModal("publishModal");
+        showModal("subscriptionModal");
+        return;
+      }
+    }
   }
 
-  try {
-    await addDoc(collection(window.db, "products"), {
-      name, price: Number(price), condition, category, location, description,
-      images: window.currentImages, ownerEmail: window.currentUser.email, promoted: isPromoted, reviews: []
-    });
-    alert("✅ تم نشر المنتج بنجاح على Firebase!");
-    window.closeModal("publishModal");
-    window.loadProducts();
-  } catch(e) {
-    alert("خطأ في النشر: " + e.message);
-  }
-};
+  var newProd = {
+    name: name,
+    price: Number(price),
+    condition: condition,
+    category: category,
+    location: location,
+    description: description,
+    images: currentImages.slice(),
+    owner_email: currentUser.email,
+    owner_name: currentUser.name,
+    promoted: isPromoted,
+    reviews: []
+  };
 
-window.loadProducts = async function() {
-  try {
-    var querySnapshot = await getDocs(collection(window.db, "products"));
-    window.products = [];
-    querySnapshot.forEach(docSnap => {
-      window.products.push({ id: docSnap.id, ...docSnap.data() });
-    });
-    window.searchProducts();
-  } catch(e) {
-    console.error("خطأ في جلب المنتجات", e);
+  if(sbClient) {
+    let { error } = await sbClient.from('products').insert([newProd]);
+    if(error) { alert("خطأ في النشر السحابي: " + error.message); return; }
   }
-};
 
-window.searchProducts = function() {
-  var v = document.getElementById("search").value.toLowerCase().trim();
-  var c = document.getElementById("products");
+  loadProducts();
+  closeModal("publishModal");
+  ["pName", "pPrice", "pLocation", "pDescription", "pImages"].forEach(function(id){ document.getElementById(id).value = ""; });
+  document.getElementById("pPromoted").checked = false;
+  document.getElementById("preview").innerHTML = "";
+  currentImages = [];
+  alert("✅ تم نشر المنتج بنجاح سحابياً");
+}
+
+async function loadProducts() {
+  if(sbClient) {
+    let { data, error } = await sbClient.from('products').select('*');
+    if(!error && data) {
+      products = data.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        condition: p.condition,
+        category: p.category,
+        location: p.location,
+        description: p.description,
+        images: p.images || [],
+        reviews: p.reviews || [],
+        ownerEmail: p.owner_email,
+        ownerName: p.owner_name,
+        promoted: p.promoted || false
+      }));
+    }
+  }
+  products.sort((a, b) => (b.promoted === true) - (a.promoted === true));
+  searchProducts();
+}
+
+function renderProducts(list) {
+  if(!list) list = products;
+  var c = document.getElementById("products"); if(!c) return;
   c.innerHTML = "";
+  if(list.length === 0) { c.innerHTML = '<div class="empty">لا توجد منتجات متاحة حالياً</div>'; return; }
   
-  var filtered = window.products.filter(p => {
-    if(v && !p.name.toLowerCase().includes(v)) return false;
-    if(window.currentCondition !== "الكل" && p.condition !== window.currentCondition) return false;
-    if(window.currentCategory !== "الكل" && p.category !== window.currentCategory) return false;
-    return true;
-  });
-
-  if(filtered.length === 0) {
-    c.innerHTML = '<div class="empty">لا توجد منتجات متاحة حالياً</div>';
-    return;
-  }
-
-  filtered.forEach(p => {
+  list.forEach(function(p) {
     var img = (p.images && p.images[0]) ? p.images[0] : "";
-    c.innerHTML += `<div class="card"><span class="badge-cond">${p.condition}</span><img src="${img}"><div class="info"><div class="title">${p.name}</div><div class="price">${p.price} دج</div><div class="location">📍 ${p.location}</div><button class="view" onclick="openProduct('${p.id}')">التفاصيل</button></div></div>`;
+    var cond = p.condition || "جديد";
+    var cls = (cond === "جديد") ? "new" : "used";
+    var promoBadge = p.promoted ? '<span class="badge-promo">⭐ مميز</span>' : '';
+    var cardClass = p.promoted ? 'card promoted' : 'card';
+    c.innerHTML += '<div class="' + cardClass + '"><span class="badge-cond ' + cls + '">' + cond + '</span>' + promoBadge + '<img src="' + img + '"><div class="info"><div class="title">' + p.name + '</div><div class="price">' + Number(p.price).toLocaleString() + ' دج</div><div class="location">📍 ' + p.location + ' · ' + p.category + '</div><br><button class="view" onclick="openProduct(' + p.id + ')">عرض التفاصيل</button></div></div>';
   });
-};
+}
 
-window.openProduct = function(id) {
-  var p = window.products.find(x => x.id === id);
+function openProduct(id) {
+  var p = null; products.forEach(function(x){ if(x.id === id) p = x; });
   if(!p) return;
-  var imgs = p.images.map(i => `<img class="product-image" src="${i}">`).join("");
-  document.getElementById("productDetails").innerHTML = `<h2>${p.name}</h2>${imgs}<h3>${p.price} دج</h3><p>${p.description}</p>`;
-  window.showModal("productModal");
-};
+  var imgs = ""; p.images.forEach(function(i){ imgs += '<img class="product-image" src="' + i + '">'; });
+  var revs = "<p>لا توجد تعليقات بعد.</p>";
+  if(p.reviews && p.reviews.length > 0) {
+    revs = ""; p.reviews.forEach(function(r){ revs += '<div class="review"><strong>' + r.name + '</strong><p>' + r.text + '</p></div>'; });
+  }
+  var isOwner = currentUser && currentUser.email === p.ownerEmail;
+  var canContact = currentUser && !isOwner;
+  var cond = p.condition || "جديد";
+  
+  var h = '<h2>' + p.name + '</h2>' + imgs + '<p style="padding:5px 12px; border-radius:20px; background:' + (cond === "جديد" ? "var(--secondary)" : "var(--accent)") + '; color:white; display:inline-block; font-weight:bold;">' + cond + '</p><h2 style="margin-top:10px;">' + Number(p.price).toLocaleString() + ' دج</h2><p>📂 ' + p.category + '</p><p>📍 ' + p.location + '</p><p>👤 ' + p.ownerName + '</p><br><p>' + p.description + '</p><hr><br><h3>التعليقات</h3>' + revs + '<div class="field"><input id="reviewName" placeholder="اسمك" value="' + (currentUser ? currentUser.name : '') + '"></div><div class="field"><textarea id="reviewText" placeholder="اكتب تعليقك..."></textarea></div><button class="submit" onclick="addReview(' + p.id + ')">نشر التعليق</button>';
+  
+  if(canContact) h += '<button class="submit" style="background:var(--accent); margin-top:10px;" onclick="contactSeller(\'' + p.ownerEmail + '\',\'' + (p.ownerName || "").replace(/'/g, "") + '\')">💬 تواصل مع البائع</button>';
+  if(isOwner) h += '<button class="delete" onclick="deleteProduct(' + p.id + ')">🗑️ حذف المنتج</button>';
+  
+  document.getElementById("productDetails").innerHTML = h;
+  showModal("productModal");
+}
 
-window.openAccountMenu = function() {
-  if(!window.currentUser) { window.showModal("loginModal"); return; }
-  document.getElementById("menuEmail").textContent = window.currentUser.email;
-  window.showModal("accountModal");
-};
+async function addReview(id) {
+  if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
+  var p = null; products.forEach(function(x){ if(x.id === id) p = x; });
+  if(!p) return;
+  var n = document.getElementById("reviewName").value.trim();
+  var t = document.getElementById("reviewText").value.trim();
+  if(!n || !t) { alert("املأ حقول التعليق"); return; }
+  if(!p.reviews) p.reviews = [];
+  p.reviews.push({name: n, text: t});
 
-window.switchAuthTab = function(tab) {
-  if(tab === 'login') {
+  if(sbClient) {
+    await sbClient.from('products').update({reviews: p.reviews}).eq('id', id);
+  }
+  loadProducts();
+  openProduct(id);
+}
+
+async function deleteProduct(id) {
+  if(!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+  if(sbClient) {
+    await sbClient.from('products').delete().eq('id', id);
+  }
+  closeModal("productModal");
+  loadProducts();
+}
+
+function searchProducts() {
+  var v = document.getElementById("search").value.toLowerCase().trim();
+  var r = [];
+  products.forEach(function(p) {
+    if(v && p.name.toLowerCase().indexOf(v) === -1) return;
+    if(currentCondition !== "All" && currentCondition !== "الكل") {
+      var c = p.condition || "جديد";
+      if(c !== currentCondition) return;
+    }
+    if(currentCategory !== "الكل" && p.category !== currentCategory) return;
+    r.push(p);
+  });
+  renderProducts(r);
+}
+
+async function getUnreadCount() {
+  if(!currentUser) return 0;
+  if(sbClient) {
+    let { count } = await sbClient.from('messages').select('*', { count: 'exact', head: true }).eq('to_email', currentUser.email).eq('read', false);
+    return count || 0;
+  }
+  return 0;
+}
+
+async function openAccountMenu() {
+  if(!currentUser) { showModal("loginModal"); switchAuthTab("login"); return; }
+  document.getElementById("menuName").textContent = currentUser.name || "المستخدم";
+  document.getElementById("menuEmail").textContent = currentUser.email || "";
+  document.getElementById("subStatus").textContent = currentUser.is_subscribed ? "⭐ حساب مشترك (غير محدود)" : "📦 حساب مجاني (حد أقصى 10 منتجات)";
+  if(currentUser.avatar) document.getElementById("menuAvatar").src = currentUser.avatar;
+  
+  var u = await getUnreadCount();
+  var b = document.getElementById("unreadBadge");
+  if(b) { if(u > 0) { b.style.display = "inline-block"; b.textContent = u; } else { b.style.display = "none"; } }
+  showModal("accountModal");
+}
+
+function switchAuthTab(tab) {
+  var tl = document.getElementById("tabLogin"), tr = document.getElementById("tabRegister");
+  if(tab === "login") {
     document.getElementById("loginForm").style.display = "block";
     document.getElementById("registerForm").style.display = "none";
+    tl.style.background = "var(--secondary)"; tl.style.color = "white"; tr.style.background = "#ccc"; tr.style.color = "#333";
   } else {
     document.getElementById("loginForm").style.display = "none";
     document.getElementById("registerForm").style.display = "block";
+    tr.style.background = "var(--secondary)"; tr.style.color = "white"; tl.style.background = "#ccc"; tl.style.color = "#333";
   }
-};
+}
 
-window.registerUser = async function() {
-  var e = document.getElementById("regEmail").value;
-  var p = document.getElementById("regPassword").value;
-  try {
-    await createUserWithEmailAndPassword(window.auth, e, p);
-    alert("✅ تم إنشاء الحساب بنجاح!");
-    window.closeModal("loginModal");
-  } catch(err) { alert("خطأ: " + err.message); }
-};
+async function login() {
+  var e = document.getElementById("email").value.trim().toLowerCase();
+  var pw = document.getElementById("password").value;
+  if(!e || !pw) { alert("أدخل البيانات كاملة"); return; }
+  if(!isValidEmail(e)) { alert("❌ البريد غير صالح"); return; }
 
-window.loginUser = async function() {
-  var e = document.getElementById("email").value;
-  var p = document.getElementById("password").value;
-  try {
-    await signInWithEmailAndPassword(window.auth, e, p);
-    alert("✅ تم تسجيل الدخول بنجاح!");
-    window.closeModal("loginModal");
-  } catch(err) { alert("خطأ: " + err.message); }
-};
+  if(sbClient) {
+    let { data, error } = await sbClient.from('users').select('*').eq('email', e).single();
+    if(error || !data) { alert("❌ لا يوجد حساب بهذا البريد"); return; }
+    if(data.password !== pw) { alert("❌ كلمة المرور غير صحيحة"); return; }
+    currentUser = data;
+  }
 
-window.logoutUser = async function() {
-  await signOut(window.auth);
-  window.currentUser = null;
-  alert("تم تسجيل الخروج");
-  window.closeModal("accountModal");
-};
+  safeSave("marketDZ_currentUser", currentUser);
+  alert("✅ تم تسجيل الدخول بنجاح");
+  closeModal("loginModal");
+}
 
-onAuthStateChanged(window.auth, user => {
-  window.currentUser = user;
-});
+function logout() {
+  currentUser = null;
+  localStorage.removeItem("marketDZ_currentUser");
+  closeModal("accountModal");
+  alert("🚪 تم تسجيل الخروج");
+}
+
+function sendOtp(inputId, statusId) {
+  var e = document.getElementById(inputId).value.trim();
+  if(!e) { alert("أدخل البريد الإلكتروني أولاً"); return; }
+  if(!isValidEmail(e)) { alert("❌ البريد غير صالح"); return; }
+
+  var chars = "0123456789";
+  generatedOtp = "";
+  for(var i = 0; i < 6; i++) generatedOtp += chars.charAt(Math.floor(Math.random() * chars.length));
+
+  var statusEl = document.getElementById(statusId);
+  if(statusEl) statusEl.textContent = "⏳ جاري إرسال الرمز...";
+
+  emailjs.send("service_29tyoia", "template_whvc2dn", { email: e, passcode: generatedOtp, time: "15 دقيقة" }, "504YTDFk825_yUBOM")
+    .then(function() {
+      if(statusEl) statusEl.textContent = "✅ تم إرسال الرمز بنجاح.";
+      alert("📩 تم إرسال رمز التحقق العشوائي إلى بريدك الإلكتروني!");
+    }, function(error) {
+      console.error(error);
+      if(statusEl) statusEl.textContent = "❌ فشل الإرسال.";
+      alert("❌ حدث خطأ في إرسال البريد.");
+    });
+}
+
+async function register() {
+  var n = document.getElementById("regName").value.trim();
+  var e = document.getElementById("regEmail").value.trim().toLowerCase();
+  var pw = document.getElementById("regPassword").value;
+  var pw2 = document.getElementById("regPassword2").value;
+  var otp = document.getElementById("otpCode").value.trim();
+
+  if(!n || !e || !pw || !otp) { alert("املأ جميع الحقول"); return; }
+  if(!isValidEmail(e)) { alert("❌ البريد الإلكتروني غير صالح"); return; }
+  if(pw !== pw2) { alert("❌ كلمة المرور غير متطابقة"); return; }
+  if(otp !== generatedOtp) { alert("❌ رمز التحقق غير صحيح"); return; }
+
+  var newUser = { name: n, email: e, password: pw, is_subscribed: false };
+  if(sbClient) {
+    let { error } = await sbClient.from('users').insert([newUser]);
+    if(error) { alert("❌ خطأ في التسجيل: " + error.message); return; }
+  }
+
+  currentUser = newUser;
+  safeSave("marketDZ_currentUser", currentUser);
+  alert("✅ تم إنشاء الحساب بنجاح!");
+  closeModal("loginModal");
+}
 
 window.onload = function() {
-  if(!localStorage.getItem("marketDZ_acceptedTerms")) window.showModal("welcomeTermsModal");
-  setTimeout(() => window.loadProducts(), 1000);
+  var saved = safeLoad("marketDZ_currentUser", null);
+  if(saved) currentUser = saved;
+  if(!localStorage.getItem("marketDZ_acceptedTerms")) {
+    showModal("welcomeTermsModal");
+  }
+  loadProducts();
 };
 </script>
 </body>
