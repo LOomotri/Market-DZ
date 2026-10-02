@@ -10,9 +10,9 @@
   const SUPABASE_URL = "https://wxtffloscqmfhjjojukq.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_96qVePKIdhZM6yb5G9F1Ow_P_7nNlQQ";
   
-  let supabase = null;
+  let sbClient = null;
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log("تم الاتصال بقاعدة بيانات Supabase بنجاح");
   } catch(e) {
     console.error("خطأ في الاتصال بـ Supabase", e);
@@ -117,7 +117,7 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <div class="condition-bar">
 <button id="condAll" onclick="filterCondition('الكل')">🛒 الكل</button>
 <button id="condNew" class="active" onclick="filterCondition('جديد')">✨ جديد</button>
-<button id="condUsed" onclick="filterCondition('مستعمل')">♻️ مستعمل</button>
+<button id="condUsed" onclick="filterCondition('مستعمل')">♻️️ مستعمل</button>
 </div>
 
 <div class="categories" id="categoriesBar">
@@ -338,10 +338,10 @@ function previewImages(event) {
 
 async function paySubscription() {
   if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
-  currentUser.isSubscribed = true;
+  currentUser.is_subscribed = true;
   safeSave("marketDZ_currentUser", currentUser);
-  if(supabase) {
-    await supabase.from('users').update({is_subscribed: true}).eq('email', currentUser.email);
+  if(sbClient) {
+    await sbClient.from('users').update({is_subscribed: true}).eq('email', currentUser.email);
   }
   alert("🎉 تم الاشتراك بنجاح! يمكنك الآن نشر منتجات بلا حدود.");
   closeModal("subscriptionModal");
@@ -363,9 +363,9 @@ async function publishProduct() {
   if(!location) { alert("اكتب الولاية"); return; }
   if(currentImages.length === 0) { alert("اختر صورة واحدة على الأقل للمنتج"); return; }
 
-  if(!currentUser.isSubscribed) {
-    if(supabase) {
-      let { count } = await supabase.from('products').select('*', { count: 'exact', head: true }).eq('owner_email', currentUser.email);
+  if(!currentUser.is_subscribed) {
+    if(sbClient) {
+      let { count } = await sbClient.from('products').select('*', { count: 'exact', head: true }).eq('owner_email', currentUser.email);
       if(count >= 10) {
         closeModal("publishModal");
         showModal("subscriptionModal");
@@ -388,8 +388,8 @@ async function publishProduct() {
     reviews: []
   };
 
-  if(supabase) {
-    let { error } = await supabase.from('products').insert([newProd]);
+  if(sbClient) {
+    let { error } = await sbClient.from('products').insert([newProd]);
     if(error) { alert("خطأ في النشر السحابي: " + error.message); return; }
   }
 
@@ -403,8 +403,8 @@ async function publishProduct() {
 }
 
 async function loadProducts() {
-  if(supabase) {
-    let { data, error } = await supabase.from('products').select('*');
+  if(sbClient) {
+    let { data, error } = await sbClient.from('products').select('*');
     if(!error && data) {
       products = data.map(p => ({
         id: p.id,
@@ -473,8 +473,8 @@ async function addReview(id) {
   if(!p.reviews) p.reviews = [];
   p.reviews.push({name: n, text: t});
 
-  if(supabase) {
-    await supabase.from('products').update({reviews: p.reviews}).eq('id', id);
+  if(sbClient) {
+    await sbClient.from('products').update({reviews: p.reviews}).eq('id', id);
   }
   loadProducts();
   openProduct(id);
@@ -482,8 +482,8 @@ async function addReview(id) {
 
 async function deleteProduct(id) {
   if(!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
-  if(supabase) {
-    await supabase.from('products').delete().eq('id', id);
+  if(sbClient) {
+    await sbClient.from('products').delete().eq('id', id);
   }
   closeModal("productModal");
   loadProducts();
@@ -506,8 +506,8 @@ function searchProducts() {
 
 async function getUnreadCount() {
   if(!currentUser) return 0;
-  if(supabase) {
-    let { count } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('to_email', currentUser.email).eq('read', false);
+  if(sbClient) {
+    let { count } = await sbClient.from('messages').select('*', { count: 'exact', head: true }).eq('to_email', currentUser.email).eq('read', false);
     return count || 0;
   }
   return 0;
@@ -545,8 +545,8 @@ async function login() {
   if(!e || !pw) { alert("أدخل البيانات كاملة"); return; }
   if(!isValidEmail(e)) { alert("❌ البريد غير صالح"); return; }
 
-  if(supabase) {
-    let { data, error } = await supabase.from('users').select('*').eq('email', e).single();
+  if(sbClient) {
+    let { data, error } = await sbClient.from('users').select('*').eq('email', e).single();
     if(error || !data) { alert("❌ لا يوجد حساب بهذا البريد"); return; }
     if(data.password !== pw) { alert("❌ كلمة المرور غير صحيحة"); return; }
     currentUser = data;
@@ -601,13 +601,13 @@ async function register() {
   if(!generatedOtp) { alert("❌ يرجى النقر على زر 'إرسال الرمز' أولاً"); return; }
   if(otp !== generatedOtp) { alert("❌ رمز التحقق غير صحيح"); return; }
 
-  if(supabase) {
+  if(sbClient) {
     try {
-      let { data: existing } = await supabase.from('users').select('*').eq('email', e).maybeSingle();
+      let { data: existing } = await sbClient.from('users').select('*').eq('email', e).maybeSingle();
       if(existing) { alert("❌ هذا البريد مسجل مسبقاً بالفعل"); return; }
       
       var nu = { name: n, email: e, password: pw, avatar: "", is_subscribed: false };
-      let { error } = await supabase.from('users').insert([nu]);
+      let { error } = await sbClient.from('users').insert([nu]);
       if(error) { 
         alert("❌ خطأ Supabase: " + error.message); 
         console.error(error);
@@ -641,7 +641,7 @@ async function changeAvatar(event) {
     document.getElementById("profileAvatar").src = e.target.result;
     currentUser.avatar = e.target.result;
     safeSave("marketDZ_currentUser", currentUser);
-    if(supabase) await supabase.from('users').update({avatar: currentUser.avatar}).eq('email', currentUser.email);
+    if(sbClient) await sbClient.from('users').update({avatar: currentUser.avatar}).eq('email', currentUser.email);
   };
   r.readAsDataURL(f);
 }
@@ -651,7 +651,7 @@ async function saveProfile() {
   if(!n) { alert("اكتب الاسم"); return; }
   currentUser.name = n;
   safeSave("marketDZ_currentUser", currentUser);
-  if(supabase) await supabase.from('users').update({name: n}).eq('email', currentUser.email);
+  if(sbClient) await sbClient.from('users').update({name: n}).eq('email', currentUser.email);
   alert("✅ تم حفظ التعديلات");
   closeModal("profileModal");
 }
@@ -667,9 +667,9 @@ async function saveEmail() {
   var oe = currentUser.email;
   currentUser.email = e;
   safeSave("marketDZ_currentUser", currentUser);
-  if(supabase) {
-    await supabase.from('users').update({email: e}).eq('email', oe);
-    await supabase.from('products').update({owner_email: e}).eq('owner_email', oe);
+  if(sbClient) {
+    await sbClient.from('users').update({email: e}).eq('email', oe);
+    await sbClient.from('products').update({owner_email: e}).eq('owner_email', oe);
   }
   alert("✅ تم تحديث البريد الإلكتروني");
 }
@@ -686,7 +686,7 @@ async function savePassword() {
   if(!pw || !passwordOtp || otp !== passwordOtp) { alert("❌ خطأ في كلمة المرور أو رمز التحقق"); return; }
   currentUser.password = pw;
   safeSave("marketDZ_currentUser", currentUser);
-  if(supabase) await supabase.from('users').update({password: pw}).eq('email', currentUser.email);
+  if(sbClient) await sbClient.from('users').update({password: pw}).eq('email', currentUser.email);
   passwordOtp = null;
   alert("✅ تم تحديث كلمة المرور");
   closeModal("settingsModal");
@@ -711,8 +711,8 @@ function openOrders() {
 async function openMessages() {
   var c = document.getElementById("chatsList"); if(!c) return;
   let all = [];
-  if(supabase) {
-    let { data } = await supabase.from('messages').select('*').or(`from_email.eq.${currentUser.email},to_email.eq.${currentUser.email}`);
+  if(sbClient) {
+    let { data } = await sbClient.from('messages').select('*').or(`from_email.eq.${currentUser.email},to_email.eq.${currentUser.email}`);
     all = data || [];
   }
   var map = {};
@@ -756,10 +756,10 @@ function backToChats() { openMessages(); }
 async function renderChatMessages() {
   var c = document.getElementById("chatMessages"); if(!c) return;
   let all = [];
-  if(supabase) {
-    let { data } = await supabase.from('messages').select('*').or(`and(from_email.eq.${currentUser.email},to_email.eq.${currentChatWith.email}),and(from_email.eq.${currentChatWith.email},to_email.eq.${currentUser.email})`).order('id', { ascending: true });
+  if(sbClient) {
+    let { data } = await sbClient.from('messages').select('*').or(`and(from_email.eq.${currentUser.email},to_email.eq.${currentChatWith.email}),and(from_email.eq.${currentChatWith.email},to_email.eq.${currentUser.email})`).order('id', { ascending: true });
     all = data || [];
-    await supabase.from('messages').update({read: true}).eq('to_email', currentUser.email).eq('from_email', currentChatWith.email);
+    await sbClient.from('messages').update({read: true}).eq('to_email', currentUser.email).eq('from_email', currentChatWith.email);
   }
   c.innerHTML = "";
   if(all.length === 0) { c.innerHTML = "<p style='text-align:center; color:#777; margin-top:20px;'>ابدأ المحادثة الآن</p>"; return; }
@@ -775,7 +775,7 @@ async function sendMessage() {
   var t = input ? input.value.trim() : "";
   if(!t || !currentChatWith) return;
   var nm = { from_email: currentUser.email, from_name: currentUser.name, to_email: currentChatWith.email, to_name: currentChatWith.name, text: t, read: false };
-  if(supabase) await supabase.from('messages').insert([nm]);
+  if(sbClient) await sbClient.from('messages').insert([nm]);
   input.value = "";
   renderChatMessages();
 }
@@ -784,7 +784,7 @@ function openAppSettings() { showModal("appSettingsModal"); }
 
 async function deleteAccount() {
   if(!confirm("هل أنت متأكد من حذف الحساب نهائياً؟")) return;
-  if(supabase) await supabase.from('users').delete().eq('email', currentUser.email);
+  if(sbClient) await sbClient.from('users').delete().eq('email', currentUser.email);
   currentUser = null;
   localStorage.removeItem("marketDZ_currentUser");
   closeModal("appSettingsModal");
