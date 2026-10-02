@@ -76,16 +76,6 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 .delete { background: #d32f2f; color: white; border: 0; padding: 11px; border-radius: 8px; cursor: pointer; margin-top: 12px; width: 100%; font-size: 16px; font-weight: bold; }
 .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #f4f4f4; border-radius: 12px; margin-bottom: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .menu-item:hover { background: #ececec; }
-.chat-item { display: flex; gap: 10px; align-items: center; padding: 12px; background: #f4f4f4; border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
-.chat-item img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
-.chat-item .msg-preview { color: #777; font-size: 13px; }
-.chat-window { height: 350px; overflow-y: auto; padding: 10px; background: #f4f4f4; border-radius: 12px; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
-.msg-me, .msg-other { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 14px; word-wrap: break-word; }
-.msg-me { background: var(--secondary); color: white; align-self: flex-start; }
-.msg-other { background: white; color: var(--text-color); align-self: flex-end; border: 1px solid #eee; }
-.chat-input { display: flex; gap: 8px; }
-.chat-input input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; }
-.chat-input button { background: var(--secondary); color: white; border: 0; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
 .badge { background: #d32f2f; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 6px; }
 @media(max-width: 800px) { .products { grid-template-columns: repeat(2, 1fr); } }
 @media(max-width: 450px) { .card img { height: 155px; } }
@@ -152,22 +142,6 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <button class="submit" onclick="publishProduct()">نشر المنتج</button>
 </div></div>
 
-<div id="subscriptionModal" class="modal"><div class="box" style="text-align:center;">
-<button class="close" onclick="closeModal('subscriptionModal')">×</button>
-<h2 style="color:var(--secondary);">⭐ ترقية الحساب (الباقة غير المحدودة)</h2>
-<p style="color:#555; margin-bottom:15px;">لقد وصلت إلى الحد الأقصى (10 منتجات). اشترك الآن لنشر منتجات بلا حدود!</p>
-<div style="background:#f9f9f9; padding:20px; border-radius:12px; margin-bottom:20px; border:2px solid var(--secondary);">
-  <h3 style="color:#333; font-size:24px; margin-bottom:5px;">$6 / شهرياً</h3>
-  <p style="color:#777; font-size:14px;">نشر غير محدود + أولوية ظهور وترويج للمنتجات</p>
-</div>
-<div class="field"><label style="text-align:right;">رقم بطاقة الفيزا / البنك</label><input type="text" placeholder="4000 0000 0000 0000" style="text-align:center; letter-spacing:2px;"></div>
-<div style="display:flex; gap:10px;">
-  <div class="field" style="flex:1;"><label style="text-align:right;">تاريخ الانتهاء</label><input type="text" placeholder="MM/YY"></div>
-  <div class="field" style="flex:1;"><label style="text-align:right;">رمز الأمان (CVV)</label><input type="password" maxlength="3" placeholder="123"></div>
-</div>
-<button class="submit" onclick="paySubscription()" style="background:var(--accent); margin-top:10px;">💳 إتمام الاشتراك وتفعيل الحساب (6$)</button>
-</div></div>
-
 <div id="loginModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('loginModal')">×</button>
 <div style="display:flex; gap:8px; margin-bottom:20px;">
@@ -198,83 +172,11 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <div id="accountModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('accountModal')">×</button>
 <div style="text-align:center; margin-bottom:20px;">
-<img id="menuAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--secondary);">
 <h2 id="menuName">المستخدم</h2>
 <p id="menuEmail" style="color:#777;"></p>
 <p id="subStatus" style="color:var(--accent); font-weight:bold; margin-top:5px;"></p>
 </div>
-<div class="menu-item" onclick="closeModal('accountModal');showModal('subscriptionModal')"><span>⭐ ترقية الحساب غير المحدود (6$)</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openProfile()"><span>👤 الملف الشخصي</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openSettings()"><span>⚙️ الإعدادات</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openPrivacy()"><span>🔒 الخصوصية</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openOrders()"><span>📦 منتجاتي</span><span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openMessages()"><span>💬 الرسائل</span><span><span id="unreadBadge" class="badge" style="display:none;">0</span>›</span></div>
-<div class="menu-item" onclick="closeModal('accountModal');openAppSettings()"><span>🛠️ إعدادات التطبيق</span><span>›</span></div>
 <button class="delete" style="background:#555; margin-top:15px;" onclick="logout()">🚪 خروج</button>
-</div></div>
-
-<div id="profileModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('profileModal')">×</button>
-<h2>👤 الملف الشخصي</h2>
-<div style="text-align:center;">
-<img id="profileAvatar" src="https://via.placeholder.com/100/008653/ffffff?text=👤" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--secondary);">
-<div class="field"><label>الصورة الشخصية</label><input type="file" accept="image/*" onchange="changeAvatar(event)"></div>
-</div>
-<div class="field"><label>الاسم</label><input id="profileName" type="text"></div>
-<button class="submit" onclick="saveProfile()">حفظ التعديلات</button>
-</div></div>
-
-<div id="settingsModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('settingsModal')">×</button>
-<h2>⚙️ إعدادات الحساب</h2>
-<div class="field"><label>البريد الإلكتروني</label><input id="setEmail" type="email"></div>
-<button class="submit" onclick="saveEmail()">حفظ البريد</button>
-<hr style="margin:20px 0;">
-<div class="field"><label>كلمة المرور الجديدة</label><input id="setPassword" type="password"></div>
-<div class="field"><label>رمز التحقق (OTP)</label>
-<div style="display:flex; gap:8px;">
-<input id="setOtpCode" type="text" maxlength="6" style="flex:1; text-align:center; letter-spacing:6px; font-weight:bold;">
-<button type="button" id="passOtpBtn" class="submit" style="width:auto; padding:13px 18px; background:var(--accent);" onclick="sendOtpForPassword()">إرسال الرمز</button>
-</div>
-<small id="setOtpStatus" style="color:#777;"></small>
-</div>
-<button class="submit" onclick="savePassword()">تحديث كلمة المرور</button>
-</div></div>
-
-<div id="privacyModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('privacyModal')">×</button>
-<h2>🔒 الخصوصية وإخلاء المسؤولية</h2>
-<div style="padding:14px; background:#f4f4f4; border-radius:12px; line-height:1.6;">
-  <p><b>البريد الإلكتروني:</b> <span id="privacyEmail">—</span></p><br>
-  <p><b>تنبيه قانوني:</b> منصة Market DZ وسيط عرض فقط، وإدارة الموقع لا تتحمل أي مسؤولية عن جودة المنتجات أو معاملات البيع المباشر.</p>
-</div>
-</div></div>
-
-<div id="ordersModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('ordersModal')">×</button>
-<h2>📦 منتجاتي المنشورة</h2>
-<div id="ordersList"></div>
-</div></div>
-
-<div id="messagesModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('messagesModal')">×</button>
-<h2>💬 صندوق الرسائل</h2>
-<div id="chatsList"></div>
-<div id="chatWindow" style="display:none;">
-<button class="submit" style="background:#ccc; color:#333; margin-bottom:10px; width:auto;" onclick="backToChats()">‹ رجوع للرسائل</button>
-<h3 id="chatWithEmail"></h3>
-<div class="chat-window" id="chatMessages"></div>
-<div class="chat-input">
-<input id="chatInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter')sendMessage()">
-<button onclick="sendMessage()">إرسال</button>
-</div>
-</div>
-</div></div>
-
-<div id="appSettingsModal" class="modal"><div class="box">
-<button class="close" onclick="closeModal('appSettingsModal')">×</button>
-<h2>🛠 إعدادات التطبيق</h2>
-<button class="delete" onclick="deleteAccount()" style="margin-top:10px;">🗑️ حذف الحساب نهائياً</button>
 </div></div>
 
 <div id="productModal" class="modal"><div class="box">
@@ -283,7 +185,7 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 </div></div>
 
 <script>
-var products = [], currentCondition = "جديد", currentCategory = "الكل", currentImages = [], generatedOtp = null, currentUser = null, currentChatWith = null, passwordOtp = null;
+var products = [], currentCondition = "جديد", currentCategory = "الكل", currentImages = [], generatedOtp = null, currentUser = null;
 
 function safeLoad(k, f) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch(e) { return f; } }
 function safeSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
@@ -336,20 +238,8 @@ function previewImages(event) {
   });
 }
 
-async function paySubscription() {
-  if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
-  currentUser.is_subscribed = true;
-  safeSave("marketDZ_currentUser", currentUser);
-  if(sbClient) {
-    await sbClient.from('users').update({is_subscribed: true}).eq('email', currentUser.email);
-  }
-  alert("🎉 تم الاشتراك بنجاح! يمكنك الآن نشر منتجات بلا حدود.");
-  closeModal("subscriptionModal");
-}
-
 async function publishProduct() {
   if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
-
   var name = document.getElementById("pName").value.trim();
   var price = document.getElementById("pPrice").value;
   var condition = document.getElementById("pCondition").value;
@@ -362,17 +252,6 @@ async function publishProduct() {
   if(!price) { alert("اكتب السعر"); return; }
   if(!location) { alert("اكتب الولاية"); return; }
   if(currentImages.length === 0) { alert("اختر صورة واحدة على الأقل للمنتج"); return; }
-
-  if(!currentUser.is_subscribed) {
-    if(sbClient) {
-      let { count } = await sbClient.from('products').select('*', { count: 'exact', head: true }).eq('owner_email', currentUser.email);
-      if(count >= 10) {
-        closeModal("publishModal");
-        showModal("subscriptionModal");
-        return;
-      }
-    }
-  }
 
   var newProd = {
     name: name,
@@ -451,12 +330,10 @@ function openProduct(id) {
     revs = ""; p.reviews.forEach(function(r){ revs += '<div class="review"><strong>' + r.name + '</strong><p>' + r.text + '</p></div>'; });
   }
   var isOwner = currentUser && currentUser.email === p.ownerEmail;
-  var canContact = currentUser && !isOwner;
   var cond = p.condition || "جديد";
   
   var h = '<h2>' + p.name + '</h2>' + imgs + '<p style="padding:5px 12px; border-radius:20px; background:' + (cond === "جديد" ? "var(--secondary)" : "var(--accent)") + '; color:white; display:inline-block; font-weight:bold;">' + cond + '</p><h2 style="margin-top:10px;">' + Number(p.price).toLocaleString() + ' دج</h2><p>📂 ' + p.category + '</p><p>📍 ' + p.location + '</p><p>👤 ' + p.ownerName + '</p><br><p>' + p.description + '</p><hr><br><h3>التعليقات</h3>' + revs + '<div class="field"><input id="reviewName" placeholder="اسمك" value="' + (currentUser ? currentUser.name : '') + '"></div><div class="field"><textarea id="reviewText" placeholder="اكتب تعليقك..."></textarea></div><button class="submit" onclick="addReview(' + p.id + ')">نشر التعليق</button>';
   
-  if(canContact) h += '<button class="submit" style="background:var(--accent); margin-top:10px;" onclick="contactSeller(\'' + p.ownerEmail + '\',\'' + (p.ownerName || "").replace(/'/g, "") + '\')">💬 تواصل مع البائع</button>';
   if(isOwner) h += '<button class="delete" onclick="deleteProduct(' + p.id + ')">🗑️ حذف المنتج</button>';
   
   document.getElementById("productDetails").innerHTML = h;
@@ -504,25 +381,11 @@ function searchProducts() {
   renderProducts(r);
 }
 
-async function getUnreadCount() {
-  if(!currentUser) return 0;
-  if(sbClient) {
-    let { count } = await sbClient.from('messages').select('*', { count: 'exact', head: true }).eq('to_email', currentUser.email).eq('read', false);
-    return count || 0;
-  }
-  return 0;
-}
-
-async function openAccountMenu() {
+function openAccountMenu() {
   if(!currentUser) { showModal("loginModal"); switchAuthTab("login"); return; }
   document.getElementById("menuName").textContent = currentUser.name || "المستخدم";
   document.getElementById("menuEmail").textContent = currentUser.email || "";
-  document.getElementById("subStatus").textContent = currentUser.is_subscribed ? "⭐ حساب مشترك (غير محدود)" : "📦 حساب مجاني (حد أقصى 10 منتجات)";
-  if(currentUser.avatar) document.getElementById("menuAvatar").src = currentUser.avatar;
-  
-  var u = await getUnreadCount();
-  var b = document.getElementById("unreadBadge");
-  if(b) { if(u > 0) { b.style.display = "inline-block"; b.textContent = u; } else { b.style.display = "none"; } }
+  document.getElementById("subStatus").textContent = currentUser.is_subscribed ? "⭐ حساب مشترك (غير محدود)" : "📦 حساب مجاني";
   showModal("accountModal");
 }
 
@@ -594,214 +457,31 @@ async function register() {
   var pw2 = document.getElementById("regPassword2").value;
   var otp = document.getElementById("otpCode").value.trim();
 
-  if(!n || !e || !pw || !pw2) { alert("❌ يرجى ملء كافة الحقول"); return; }
-  if(!isValidEmail(e)) { alert("❌ صيغة البريد الإلكتروني غير صالحة"); return; }
-  if(pw !== pw2) { alert("❌ كلمتا المرور غير متطابقتين"); return; }
-  if(!otp) { alert("❌ يرجى إدخال رمز التحقق (OTP)"); return; }
-  if(!generatedOtp) { alert("❌ يرجى النقر على زر 'إرسال الرمز' أولاً"); return; }
+  if(!n || !e || !pw || !otp) { alert("املأ جميع الحقول"); return; }
+  if(!isValidEmail(e)) { alert("❌ البريد الإلكتروني غير صالح"); return; }
+  if(pw !== pw2) { alert("❌ كلمة المرور غير متطابقة"); return; }
   if(otp !== generatedOtp) { alert("❌ رمز التحقق غير صحيح"); return; }
 
+  var newUser = { name: n, email: e, password: pw, is_subscribed: false };
   if(sbClient) {
-    try {
-      let { data: existing } = await sbClient.from('users').select('*').eq('email', e).maybeSingle();
-      if(existing) { alert("❌ هذا البريد مسجل مسبقاً بالفعل"); return; }
-      
-      var nu = { name: n, email: e, password: pw, avatar: "", is_subscribed: false };
-      let { error } = await sbClient.from('users').insert([nu]);
-      if(error) { 
-        alert("❌ خطأ Supabase: " + error.message); 
-        console.error(error);
-        return; 
-      }
-      currentUser = nu;
-    } catch(err) {
-      alert("❌ حدث خطأ غير متوقع.");
-      console.error(err);
-      return;
-    }
+    let { error } = await sbClient.from('users').insert([newUser]);
+    if(error) { alert("❌ خطأ في التسجيل: " + error.message); return; }
   }
 
+  currentUser = newUser;
   safeSave("marketDZ_currentUser", currentUser);
-  generatedOtp = null;
-  alert("🎉 تم إنشاء الحساب بنجاح وتم تسجيل دخولك!");
+  alert("✅ تم إنشاء الحساب بنجاح!");
   closeModal("loginModal");
-  loadProducts();
-}
-
-function openProfile() {
-  document.getElementById("profileName").value = currentUser.name || "";
-  if(currentUser.avatar) document.getElementById("profileAvatar").src = currentUser.avatar;
-  showModal("profileModal");
-}
-
-async function changeAvatar(event) {
-  var f = event.target.files[0]; if(!f) return;
-  var r = new FileReader();
-  r.onload = async function(e) {
-    document.getElementById("profileAvatar").src = e.target.result;
-    currentUser.avatar = e.target.result;
-    safeSave("marketDZ_currentUser", currentUser);
-    if(sbClient) await sbClient.from('users').update({avatar: currentUser.avatar}).eq('email', currentUser.email);
-  };
-  r.readAsDataURL(f);
-}
-
-async function saveProfile() {
-  var n = document.getElementById("profileName").value.trim();
-  if(!n) { alert("اكتب الاسم"); return; }
-  currentUser.name = n;
-  safeSave("marketDZ_currentUser", currentUser);
-  if(sbClient) await sbClient.from('users').update({name: n}).eq('email', currentUser.email);
-  alert("✅ تم حفظ التعديلات");
-  closeModal("profileModal");
-}
-
-function openSettings() {
-  document.getElementById("setEmail").value = currentUser.email || "";
-  showModal("settingsModal");
-}
-
-async function saveEmail() {
-  var e = document.getElementById("setEmail").value.trim().toLowerCase();
-  if(!e || !isValidEmail(e)) { alert("بريد غير صالح"); return; }
-  var oe = currentUser.email;
-  currentUser.email = e;
-  safeSave("marketDZ_currentUser", currentUser);
-  if(sbClient) {
-    await sbClient.from('users').update({email: e}).eq('email', oe);
-    await sbClient.from('products').update({owner_email: e}).eq('owner_email', oe);
-  }
-  alert("✅ تم تحديث البريد الإلكتروني");
-}
-
-function sendOtpForPassword() {
-  passwordOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  document.getElementById("setOtpStatus").textContent = "✅ تم التوليد.";
-  alert("📩 رمز استعادة كلمة المرور: " + passwordOtp);
-}
-
-async function savePassword() {
-  var pw = document.getElementById("setPassword").value.trim();
-  var otp = document.getElementById("setOtpCode").value.trim();
-  if(!pw || !passwordOtp || otp !== passwordOtp) { alert("❌ خطأ في كلمة المرور أو رمز التحقق"); return; }
-  currentUser.password = pw;
-  safeSave("marketDZ_currentUser", currentUser);
-  if(sbClient) await sbClient.from('users').update({password: pw}).eq('email', currentUser.email);
-  passwordOtp = null;
-  alert("✅ تم تحديث كلمة المرور");
-  closeModal("settingsModal");
-}
-
-function openPrivacy() {
-  document.getElementById("privacyEmail").textContent = currentUser ? currentUser.email : "—";
-  showModal("privacyModal");
-}
-
-function openOrders() {
-  var c = document.getElementById("ordersList"); if(!c) return;
-  var mp = products.filter(function(p){ return currentUser && p.ownerEmail === currentUser.email; });
-  if(mp.length === 0) { c.innerHTML = "<p style='color:#777;'>لا توجد منتجات منشورة لك</p>"; showModal("ordersModal"); return; }
-  c.innerHTML = "";
-  mp.forEach(function(p) {
-    c.innerHTML += '<div style="display:flex; gap:10px; padding:12px; background:#f4f4f4; border-radius:12px; margin-bottom:10px;"><img src="' + (p.images[0] || "") + '" style="width:60px; height:60px; border-radius:10px; object-fit:cover;"><div style="flex:1;"><b>' + p.name + '</b><div style="color:var(--secondary); font-weight:bold;">' + Number(p.price).toLocaleString() + ' دج</div><div style="color:#777; font-size:13px;">📦 ' + p.category + ' · ' + p.condition + '</div></div></div>';
-  });
-  showModal("ordersModal");
-}
-
-async function openMessages() {
-  var c = document.getElementById("chatsList"); if(!c) return;
-  let all = [];
-  if(sbClient) {
-    let { data } = await sbClient.from('messages').select('*').or(`from_email.eq.${currentUser.email},to_email.eq.${currentUser.email}`);
-    all = data || [];
-  }
-  var map = {};
-  all.forEach(function(m) {
-    var op = (m.from_email === currentUser.email) ? m.to_email : m.from_email;
-    var on = (m.from_email === currentUser.email) ? m.to_name : m.from_name;
-    if(!map[op]) map[op] = {email: op, name: on, last: m.text};
-    else map[op].last = m.text;
-  });
-  var keys = Object.keys(map);
-  if(keys.length === 0) { c.innerHTML = "<p style='color:#777;'>لا توجد رسائل سابقة</p>"; }
-  else {
-    c.innerHTML = "";
-    keys.forEach(function(k) {
-      var x = map[k];
-      c.innerHTML += '<div class="chat-item" onclick="openChat(\'' + x.email + '\',\'' + x.name + '\')"><img src="https://via.placeholder.com/60/008653/ffffff?text=' + (x.name ? x.name.charAt(0) : 'U') + '"><div style="flex:1;"><b>' + x.name + '</b><div class="msg-preview">' + x.last + '</div></div><span>›</span></div>';
-    });
-  }
-  document.getElementById("chatsList").style.display = "block";
-  document.getElementById("chatWindow").style.display = "none";
-  showModal("messagesModal");
-}
-
-function contactSeller(email, name) {
-  if(!currentUser) { alert("سجّل الدخول أولاً"); return; }
-  closeModal("productModal");
-  openMessages();
-  openChat(email, name);
-}
-
-function openChat(email, name) {
-  currentChatWith = {email: email, name: name};
-  document.getElementById("chatsList").style.display = "none";
-  document.getElementById("chatWindow").style.display = "block";
-  document.getElementById("chatWithEmail").textContent = "💬 " + name;
-  renderChatMessages();
-}
-
-function backToChats() { openMessages(); }
-
-async function renderChatMessages() {
-  var c = document.getElementById("chatMessages"); if(!c) return;
-  let all = [];
-  if(sbClient) {
-    let { data } = await sbClient.from('messages').select('*').or(`and(from_email.eq.${currentUser.email},to_email.eq.${currentChatWith.email}),and(from_email.eq.${currentChatWith.email},to_email.eq.${currentUser.email})`).order('id', { ascending: true });
-    all = data || [];
-    await sbClient.from('messages').update({read: true}).eq('to_email', currentUser.email).eq('from_email', currentChatWith.email);
-  }
-  c.innerHTML = "";
-  if(all.length === 0) { c.innerHTML = "<p style='text-align:center; color:#777; margin-top:20px;'>ابدأ المحادثة الآن</p>"; return; }
-  all.forEach(function(m) {
-    var isMe = (m.from_email === currentUser.email);
-    c.innerHTML += '<div class="' + (isMe ? 'msg-me' : 'msg-other') + '">' + m.text + '</div>';
-  });
-  c.scrollTop = c.scrollHeight;
-}
-
-async function sendMessage() {
-  var input = document.getElementById("chatInput");
-  var t = input ? input.value.trim() : "";
-  if(!t || !currentChatWith) return;
-  var nm = { from_email: currentUser.email, from_name: currentUser.name, to_email: currentChatWith.email, to_name: currentChatWith.name, text: t, read: false };
-  if(sbClient) await sbClient.from('messages').insert([nm]);
-  input.value = "";
-  renderChatMessages();
-}
-
-function openAppSettings() { showModal("appSettingsModal"); }
-
-async function deleteAccount() {
-  if(!confirm("هل أنت متأكد من حذف الحساب نهائياً؟")) return;
-  if(sbClient) await sbClient.from('users').delete().eq('email', currentUser.email);
-  currentUser = null;
-  localStorage.removeItem("marketDZ_currentUser");
-  closeModal("appSettingsModal");
-  closeModal("accountModal");
-  alert("🗑️ تم حذف الحساب بنجاح");
 }
 
 window.onload = function() {
-  var savedUser = safeLoad("marketDZ_currentUser", null);
-  if(savedUser) currentUser = savedUser;
-  loadProducts();
-  
-  if(localStorage.getItem("marketDZ_acceptedTerms") === "true") {
-    closeModal("welcomeTermsModal");
+  var saved = safeLoad("marketDZ_currentUser", null);
+  if(saved) currentUser = saved;
+  if(!localStorage.getItem("marketDZ_acceptedTerms")) {
+    showModal("welcomeTermsModal");
   }
+  loadProducts();
 };
 </script>
-
 </body>
 </html>
