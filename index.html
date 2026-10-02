@@ -403,27 +403,38 @@ async function publishProduct() {
 }
 
 async function loadProducts() {
+  var c = document.getElementById("products");
+  if(products.length === 0 && c) {
+    c.innerHTML = '<div class="empty">⏳ جاري تحميل المنتجات...</div>';
+  }
+
   if(sbClient) {
-    let { data, error } = await sbClient.from('products').select('*');
-    if(!error && data) {
-      products = data.map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        condition: p.condition,
-        category: p.category,
-        location: p.location,
-        description: p.description,
-        images: p.images || [],
-        reviews: p.reviews || [],
-        ownerEmail: p.owner_email,
-        ownerName: p.owner_name,
-        promoted: p.promoted || false
-      }));
+    try {
+      let { data, error } = await sbClient.from('products').select('*');
+      if(!error && data) {
+        products = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          condition: p.condition,
+          category: p.category,
+          location: p.location,
+          description: p.description,
+          images: p.images || [],
+          reviews: p.reviews || [],
+          ownerEmail: p.owner_email,
+          ownerName: p.owner_name,
+          promoted: p.promoted || false
+        }));
+      }
+    } catch(e) {
+      console.error("خطأ في الاتصال بالخادم", e);
     }
   }
+  
   products.sort((a, b) => (b.promoted === true) - (a.promoted === true));
-  searchProducts();
+  if(typeof searchProducts === 'function') searchProducts();
+  else if(typeof renderProducts === 'function') renderProducts();
 }
 
 function renderProducts(list) {
