@@ -531,22 +531,29 @@ var e=document.getElementById("regEmail").value.trim().toLowerCase();
 var pw=document.getElementById("regPassword").value;
 var pw2=document.getElementById("regPassword2").value;
 var otp=document.getElementById("otpCode").value.trim();
-if(!n||!e||!pw||!pw2){alert("املأ الحقول");return;}
-if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صالح");return;}
-if(pw!==pw2){alert("كلمتا المرور مختلفتان");return;}
-if(!generatedOtp){alert("أرسل رمز التحقق أولاً");return;}
-if(otp!==generatedOtp){alert("❌ رمز التحقق خاطئ");return;}
+
+if(!n||!e||!pw||!pw2){alert("❌ يرجى ملء جميع الحقول المطلوبة.");return;}
+if(!isValidEmail(e)){alert("❌ البريد الإلكتروني غير صالح.");return;}
+if(pw!==pw2){alert("❌ كلمتا المرور غير متطابقتين.");return;}
+if(!otp){alert("❌ يرجى إدخال رمز التحقق (OTP).");return;}
+if(!generatedOtp){alert("❌ يرجى النقر على زر 'إرسال الرمز' أولاً.");return;}
+if(otp!==generatedOtp){alert("❌ رمز التحقق غير صحيح.");return;}
 
 if(supabase){
-  let { data: existing } = await supabase.from('users').select('*').eq('email', e).single();
-  if(existing){alert("❌ هذا البريد مسجّل مسبقاً");return;}
-  let nu={name:n,email:e,password:pw,avatar:""};
-  let { error } = await supabase.from('users').insert([nu]);
-  if(error){alert("خطأ في التسجيل: "+error.message);return;}
-  currentUser=nu;
+  try {
+    let { data: existing } = await supabase.from('users').select('*').eq('email', e).maybeSingle();
+    if(existing){alert("❌ هذا البريد مسجّل مسبقاً بالفعل.");return;}
+    let nu={name:n,email:e,password:pw,avatar:""};
+    let { error } = await supabase.from('users').insert([nu]);
+    if(error){alert("❌ خطأ في قاعدة البيانات: "+error.message);return;}
+    currentUser=nu;
+  } catch(err) {
+    alert("❌ حدث خطأ غير متوقع أثناء الاتصال بقاعدة البيانات.");
+    return;
+  }
 } else {
   let users=safeLoad("marketDZ_users",[]);
-  if(users.some(u=>u.email===e)){alert("❌ البريد مسجّل مسبقاً");return;}
+  if(users.some(u=>u.email===e)){alert("❌ البريد مسجّل مسبقاً.");return;}
   let nu={name:n,email:e,password:pw,avatar:""};
   users.push(nu); safeSave("marketDZ_users",users);
   currentUser=nu;
@@ -554,8 +561,9 @@ if(supabase){
 
 safeSave("marketDZ_currentUser",currentUser);
 generatedOtp=null;
-alert("🎉 تم إنشاء الحساب بنجاح");
+alert("🎉 تم إنشاء الحساب بنجاح وتم تسجيل دخولك!");
 closeModal("loginModal");
+loadProducts();
 }
 
 function openProfile(){
