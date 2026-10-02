@@ -16,6 +16,22 @@
     console.log("تم الاتصال بقاعدة بيانات Supabase بنجاح");
   } catch(e) {
     console.error("خطأ في الاتصال بـ Supabase", e);
+    try {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log("بنجاح تم الاتصال بقاعدة بيانات");
+    
+    // إبقاء الخادم نشطاً لمنع وضع السكون تماماً
+    setInterval(async () => {
+        try {
+            if (sbClient) {
+                await sbClient.from('products').select('id', { count: 'exact', head: true });
+            }
+        } catch (err) {}
+    }, 240000);
+
+} catch (e) {
+    console.error("خطأ في الاتصال بـ Supabase", e);
+}
   }
 </script>
 <style>
@@ -393,14 +409,22 @@ async function publishProduct() {
     if(error) { alert("خطأ في النشر السحابي: " + error.message); return; }
   }
 
-  loadProducts();
-  closeModal("publishModal");
-  ["pName", "pPrice", "pLocation", "pDescription", "pImages"].forEach(function(id){ document.getElementById(id).value = ""; });
-  document.getElementById("pPromoted").checked = false;
-  document.getElementById("preview").innerHTML = "";
-  currentImages = [];
-  alert("✅ تم نشر المنتج بنجاح سحابياً");
-}
+ // إغلاق النافذة وتفريغ الحقول وتنبيه المستخدم فوراً دون انتظار السيرفر
+    closeModal("publishModal");
+    ["pName", "pPrice", "pLocation", "pDescription", "pImage"].forEach(function(id){ 
+      var el = document.getElementById(id);
+      if(el) el.value = ""; 
+    });
+    var pPromoted = document.getElementById("pPromoted");
+    if(pPromoted) pPromoted.checked = false;
+    var preview = document.getElementById("preview");
+    if(preview) preview.innerHTML = "";
+    currentImages = [];
+    
+  alert("Product published successfully!");
+
+    // تحديث المنتجات في الخلفية بهدوء
+    loadProducts();
 
 async function loadProducts() {
   var c = document.getElementById("products");
@@ -410,7 +434,7 @@ async function loadProducts() {
 
   if(sbClient) {
     try {
-      let { data, error } = await sbClient.from('products').select('*');
+      let { data, error } = await sbClient.from('products').select('id, name, price, condition, category, location, description, images, reviews, owner_email, owner_name, promoted');
       if(!error && data) {
         products = data.map(p => ({
           id: p.id,
