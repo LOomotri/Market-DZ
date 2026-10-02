@@ -7,13 +7,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  const SUPABASE_URL = "https://foozttxylvtqetxryao.supabase.co";
+  const SUPABASE_URL = "https://foozttxylvktqetxryao.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_YxT0ebww6f81cy_uKLWbpQ_XzVrJ_u-";
   
   let sbClient = null;
   try {
     sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log("تم الاتصال بقاعدة بيانات Supabase بنجاح");
+    
+    // إبقاء الخادم نشطاً لمنع وضع السكون تماماً
+    setInterval(async () => {
+        try {
+            if (sbClient) {
+                await sbClient.from('products').select('id', { count: 'exact', head: true });
+            }
+        } catch (err) {}
+    }, 240000);
+
   } catch(e) {
     console.error("خطأ في الاتصال بـ Supabase", e);
   }
@@ -274,7 +284,7 @@ header { background: var(--primary); padding: 18px; color: white; box-shadow: 0 
 <div id="appSettingsModal" class="modal"><div class="box">
 <button class="close" onclick="closeModal('appSettingsModal')">×</button>
 <h2>🛠 إعدادات التطبيق</h2>
-<button class="delete" onclick="deleteAccount()" style="margin-top:10px;">🗑️ حذف الحساب نهائياً</button>
+<button class="delete" onclick="deleteAccount()" style="margin-top:10px;">🗑️️ حذف الحساب نهائياً</button>
 </div></div>
 
 <div id="productModal" class="modal"><div class="box">
@@ -393,35 +403,50 @@ async function publishProduct() {
     if(error) { alert("خطأ في النشر السحابي: " + error.message); return; }
   }
 
-  loadProducts();
   closeModal("publishModal");
-  ["pName", "pPrice", "pLocation", "pDescription", "pImages"].forEach(function(id){ document.getElementById(id).value = ""; });
-  document.getElementById("pPromoted").checked = false;
-  document.getElementById("preview").innerHTML = "";
+  ["pName", "pPrice", "pLocation", "pDescription"].forEach(function(id){ 
+    var el = document.getElementById(id);
+    if(el) el.value = ""; 
+  });
+  var pImages = document.getElementById("pImages"); if(pImages) pImages.value = "";
+  var pPromoted = document.getElementById("pPromoted"); if(pPromoted) pPromoted.checked = false;
+  var preview = document.getElementById("preview"); if(preview) preview.innerHTML = "";
   currentImages = [];
-  alert("✅ تم نشر المنتج بنجاح سحابياً");
+  
+  alert("Product published successfully!");
+  loadProducts();
 }
 
 async function loadProducts() {
+  var c = document.getElementById("products");
+  if(products.length === 0 && c) {
+    c.innerHTML = '<div class="empty">⏳ جاري تحميل المنتجات...</div>';
+  }
+
   if(sbClient) {
-    let { data, error } = await sbClient.from('products').select('*');
-    if(!error && data) {
-      products = data.map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        condition: p.condition,
-        category: p.category,
-        location: p.location,
-        description: p.description,
-        images: p.images || [],
-        reviews: p.reviews || [],
-        ownerEmail: p.owner_email,
-        ownerName: p.owner_name,
-        promoted: p.promoted || false
-      }));
+    try {
+      let { data, error } = await sbClient.from('products').select('id, name, price, condition, category, location, description, images, reviews, owner_email, owner_name, promoted');
+      if(!error && data) {
+        products = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          condition: p.condition,
+          category: p.category,
+          location: p.location,
+          description: p.description,
+          images: p.images || [],
+          reviews: p.reviews || [],
+          ownerEmail: p.owner_email,
+          ownerName: p.owner_name,
+          promoted: p.promoted || false
+        }));
+      }
+    } catch(e) {
+      console.error("خطأ في الاتصال بالخادم", e);
     }
   }
+  
   products.sort((a, b) => (b.promoted === true) - (a.promoted === true));
   searchProducts();
 }
@@ -789,7 +814,7 @@ async function deleteAccount() {
   localStorage.removeItem("marketDZ_currentUser");
   closeModal("appSettingsModal");
   closeModal("accountModal");
-  alert("🗑️️ تم حذف الحساب بنجاح");
+  alert("🗑 تم حذف الحساب بنجاح");
 }
 
 window.onload = function() {
